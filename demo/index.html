@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JKplayer • Demo</title>
+    <link rel="stylesheet" type="text/css" href="style/demo.css">
+    <link rel="stylesheet" type="text/css" href="/src/scss/JKplayer.css">
+</head>
+<body>
+    <h1>JKplayer</h1>
+    <div id="container">
+        <video controls poster="https://images8.alphacoders.com/746/thumb-1920-746199.jpg " id="player"></video>
+    </div>
+
+    <!-- 
+        https://images8.alphacoders.com/746/thumb-1920-746199.jpg 
+        https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-HD.jpg
+    -->
+
+    <script src="/src/js/JKplayer.js"></script>
+    <script>
+        const player = new JKplayer("#player");
+    </script>
+</body>
+</html>
