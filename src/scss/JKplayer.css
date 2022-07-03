@@ -14,8 +14,11 @@
   --range-thumb-size: 15px;
   --controls-spacing: 7px;
   --control-box-spacing: 5px 15px 15px 15px;
-  --center-play-button-size: 30px;
-  --center-play-icon-size: 17px;
+  --settings-menu-background: #ffffffaf;
+  --settings-menu-color: #313131de;
+  --settings-menu-color-hover: #ffffff;
+  --center-play-button-size: 32px;
+  --center-play-icon-size: 18px;
   --center-play-button-color: var(--theme-color);
   --center-play-icon-color: #ffffff;
 }
@@ -25,6 +28,7 @@
   position: relative;
   display: flex;
   overflow: hidden;
+  outline: none;
 }
 #jkplayer-box video {
   width: 100%;
@@ -161,6 +165,8 @@
   flex: 1;
   display: flex;
   align-items: center;
+  max-width: 150px;
+  min-width: 100px;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
   -webkit-mask-image: url("../icons/volume-max.svg");
@@ -176,40 +182,115 @@
      -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
+  width: 60px;
+  text-align: center;
 }
-#jkplayer-box #jkplayer-controls #jkplayer-settings-button {
+#jkplayer-box #jkplayer-controls #jkplayer-subtitles-button {
+  -webkit-mask-image: url("../icons/captions.svg");
+          mask-image: url("../icons/captions.svg");
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box {
+  position: relative;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button {
+  transition: 0.2s transform;
   -webkit-mask-image: url("../icons/settings.svg");
           mask-image: url("../icons/settings.svg");
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
+  position: absolute;
+  right: -10px;
+  bottom: calc(100% + 10px);
+  border-radius: 5px;
+  padding: 5px;
+  background-color: var(--settings-menu-background);
+  display: none;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu::after {
+  position: absolute;
+  bottom: -10px;
+  right: 18px;
+  content: "";
+  width: 0px;
+  height: 0px;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 10px solid var(--settings-menu-background);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option {
+  display: flex;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  transition: all 0.2s;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  color: var(--settings-menu-color);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option::after {
+  content: "";
+  width: 10px;
+  margin-left: 10px;
+  background-color: var(--settings-menu-color);
+  -webkit-mask-size: 50%;
+          mask-size: 50%;
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+          mask-position: center;
+  transition: all 0.2s;
+  -webkit-mask-image: url("../icons/right.svg");
+          mask-image: url("../icons/right.svg");
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option:hover {
+  background-color: var(--theme-color);
+  color: var(--settings-menu-color-hover);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option:hover::after {
+  background-color: var(--settings-menu-color-hover);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option .jktech-config-option-name, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option .jktech-config-option-value {
+  width: 80px;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option .jktech-config-option-value {
+  text-align: right;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-fullscreen-button {
   -webkit-mask-image: url("../icons/expand.svg");
           mask-image: url("../icons/expand.svg");
 }
-#jkplayer-box.fullscreen video {
+#jkplayer-box.jkplayer-fullscreen video {
   border-radius: 0;
 }
-#jkplayer-box.fullscreen #jkplayer-controls #jkplayer-fullscreen-button {
+#jkplayer-box.jkplayer-fullscreen #jkplayer-controls #jkplayer-fullscreen-button {
   -webkit-mask-image: url("../icons/compress.svg");
           mask-image: url("../icons/compress.svg");
 }
-#jkplayer-box.playing #jkplayer-center-play-button {
+#jkplayer-box.jkplayer-playing #jkplayer-center-play-button {
   display: none;
 }
-#jkplayer-box.playing #jkplayer-controls #jkplayer-play-button {
+#jkplayer-box.jkplayer-playing #jkplayer-controls #jkplayer-play-button {
   -webkit-mask-image: url("../icons/pause.svg");
           mask-image: url("../icons/pause.svg");
 }
-#jkplayer-box.paused #jkplayer-controls {
+#jkplayer-box.jkplayer-paused #jkplayer-controls {
   bottom: 0 !important;
 }
-#jkplayer-box.muted #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
+#jkplayer-box.jkplayer-muted #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
   -webkit-mask-image: url("../icons/volume-muted.svg");
           mask-image: url("../icons/volume-muted.svg");
 }
-#jkplayer-box.hidden-controls #jkplayer-controls {
+#jkplayer-box.jkplayer-hidden-controls #jkplayer-controls {
   bottom: -39px;
 }
-
-#detach-button-host {
+#jkplayer-box.jkplayer-hidden-controls #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
   display: none !important;
+}
+#jkplayer-box.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button {
+  transform: rotate(90deg);
+}
+#jkplayer-box.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
+  display: block;
 }/*# sourceMappingURL=JKplayer.css.map */
