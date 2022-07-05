@@ -1,25 +1,28 @@
 @charset "UTF-8";
-@import url('https://fonts.googleapis.com/css2?family=Finlandica&display=swap');
+@import url('../font/finlandica.css');
 
 :root {
     #jkplayer-box {
         //Global styles
         --controls-font-family: 'Finlandica', sans-serif;
         --player-border-radius: 10px;
+        --player-box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.59);
         --theme-color: #00b2ff;
-        --marker-color: #ffffff;
-        --marker-width: 3px;
 
         //Controls
-        --controls-buttons-size: 15px;
+        --controls-buttons-size: 17px;
         --controls-color: #ffffff;
         --remain-time-color: var(--controls-color);
-        --range-height: 5px;
+        --range-height: 7px;
         --range-background-color: #ffffff50;
+        --buffered-background-color: #ffffff8e;
         --range-thumb-color: #ffffff;
         --range-thumb-size: 15px;
         --controls-spacing: 7px;
         --control-box-spacing: 5px 15px 15px 15px;
+
+        //Poster
+        --poster-background-color: #000000;
 
         //Settings
         --settings-menu-background: #ffffffaf;
@@ -45,9 +48,23 @@
         width: 100%;
         display: flex;
         border-radius: var(--player-border-radius);
+        box-shadow: var(--player-box-shadow);
     }
 
-    #jkplayer-center-play-button {
+    #jkplayer-poster {
+        position: absolute;
+        background-position: center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--poster-background-color);
+        border-radius: var(--player-border-radius);
+    }
+
+    #jkplayer-center-play-button, #jkplayer-center-replay-button {
         cursor: pointer;
         position: absolute;
         left: 50%;
@@ -58,19 +75,34 @@
         border-radius: 5px;
         width: var(--center-play-button-size);
         height: var(--center-play-button-size);
+        opacity: 1;
+        transition: 0.2s opacity;
 
         &::after {
             content: "";
-            mask-image: url("../icons/play.svg");
             mask-repeat: no-repeat;
             mask-size: contain;
             background-color: var(--center-play-icon-color);
             width: var(--center-play-icon-size);
             height: var(--center-play-icon-size);
             position: absolute;
-            left: 60%;
+            left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
+        }
+    }
+
+    #jkplayer-center-play-button {
+        &::after {
+            mask-image: url("../icons/play.svg");
+            left: 60%;
+        }
+    }
+
+    #jkplayer-center-replay-button {
+        display: none;
+        &::after {
+            mask-image: url("../icons/replay.svg");
         }
     }
 
@@ -146,31 +178,108 @@
             flex: 7;
             margin: 0 var(--controls-spacing);
             position: relative;
-            padding: 0 var(--controls-spacing);
+            height: calc(var(--range-height) * 3);
             box-sizing: border-box;
+            display: flex;
+            align-items: center;
 
             #jkplayer-timeline-range {
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 100%;
-            }
-
-            #jkplayer-markers-box {
                 width: 100%;
                 position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
 
-                .marker {
+                #jkplayer-timeline-range-current, #jkplayer-timeline-buffered {
+                    border-radius: 5px;
                     position: absolute;
+                    width: 0;
+                    left: 0;
                     top: 50%;
                     transform: translateY(-50%);
+                }
+
+                #jkplayer-timeline-range-current {
+                    z-index: 3;
+
+                    &::after {
+                        content: "";
+                        position: absolute;
+                        right: calc(var(--range-thumb-size) / -2);
+                        height: var(--range-thumb-size);
+                        width: var(--range-thumb-size);
+                        background-color: var(--range-thumb-color);
+                        border-radius: 50%;
+                        top: 50%;
+                        transform: translateY(-50%);
+                    }
+                }
+
+                #jkplayer-timeline-buffered {
+                    background-color: var(--buffered-background-color);
+                }
+            }
+
+            #jkplayer-chapters-box {
+                width: 100%;
+                height: var(--range-height);
+                overflow: hidden;
+                position: absolute;
+
+                .jkplayer-chapter {
+                    position: absolute;
+                    top: 50%;
+                    transform: translate(1.5px, -50%) scaleY(1);
                     height: var(--range-height);
-                    border-radius: 1px;
-                    width: var(--marker-width);
-                    background-color: var(--marker-color);
-                    z-index: 2;
+                    border-radius: var(--range-height);
+                    background-color: var(--range-background-color);
+                    opacity: 0.5;
+                    transition: all 0.1s;
+                    user-select: none;
+
+                    &:hover {
+                        transform: translate(1.5px, -50%) scaleY(1.5);
+                        opacity: 1;
+                    }
+                }
+            }
+
+            #jkplayer-timeline-thumb {
+                position: absolute;
+                left: 0;
+                bottom: calc(100% + 30px);
+                border-radius: 5px;
+                transform: translateX(-50%);
+                background-color: var(--settings-menu-background);
+                display: none;
+                width: 158px;
+                height: 90px;
+
+                #jkplayer-timeline-thumb-time {
+                    position: absolute;
+                    bottom: 5px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    color: #ffffff;
+                    text-align: center;
+                    pointer-events: none;
+                    user-select: none;
+                    white-space: nowrap;
+                }
+
+                #jkplayer-timeline-thumb-name {
+                    position: absolute;
+                    bottom: -25px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    color: #ffffff;
+                    text-align: center;
+                    width: 100%;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    pointer-events: none;
+                    user-select: none;
+                    padding: 0 10px;
+                    box-sizing: border-box;
+                    transition: color 0.1s;
                 }
             }
         }
@@ -181,9 +290,10 @@
             align-items: center;
             max-width: 150px;
             min-width: 100px;
+            margin: var(--controls-spacing);
 
             #jkplayer-volume-button {
-                mask-image: url("../icons/volume-max.svg");
+                mask-image: url("../icons/volume-low.svg");
             }
 
             #jkplayer-volume-range {
@@ -191,16 +301,17 @@
             }
         }
 
-        #jkplayer-remain-time {
+        #jkplayer-duration-time, #jkplayer-current-time {
             color: var(--remain-time-color);
             margin: 0 var(--controls-spacing);
             user-select: none;
-            width: 60px;
             text-align: center;
+            text-size-adjust: none;
         }
 
         #jkplayer-subtitles-button {
-            mask-image: url("../icons/captions.svg");
+            mask-image: url("../icons/captions-disabled.svg");
+            opacity: 0.5;
         }
 
         #jkplayer-settings-box {
@@ -227,7 +338,6 @@
                     content: "";
                     width: 0px;
                     height: 0px;
-
                     border-left: 7px solid transparent;
                     border-right: 7px solid transparent;
                     border-top: 10px solid var(--settings-menu-background);
@@ -274,6 +384,10 @@
             }
         }
 
+        #jkplayer-pip-button {
+            mask-image: url("../icons/pip.svg");
+        }
+
         #jkplayer-fullscreen-button {
             mask-image: url("../icons/expand.svg");
         }
@@ -293,7 +407,7 @@
 
     &.jkplayer-playing {
         #jkplayer-center-play-button {
-            display: none;
+            opacity: 0;
         }
 
         #jkplayer-controls {
@@ -303,13 +417,48 @@
         }
     }
 
-    &.jkplayer-paused {
+    &.jkplayer-replay {
+        #jkplayer-center-play-button {
+            display: none;
+        }
+
+        #jkplayer-center-replay-button {
+            display: block;
+        }
+
         #jkplayer-controls {
-            bottom: 0 !important;
+            #jkplayer-play-button {
+                mask-image: url("../icons/replay.svg");
+            }
         }
     }
 
-    &.jkplayer-muted {
+    &.jkplayer-subtitles-enabled {
+        #jkplayer-controls {
+            #jkplayer-subtitles-button {
+                opacity: 1;
+                mask-image: url("../icons/captions.svg");
+            }
+        }
+    }
+
+    &.jkplayer-paused, &.jkplayer-pip {
+        #jkplayer-controls {
+            bottom: 0 !important;
+        }
+
+        &.jkplayer-open-settings {
+            #jkplayer-controls {
+                #jkplayer-settings-box {
+                    #jkplayer-settings-menu {
+                        display: block !important;
+                    }
+                }
+            }
+        }
+    }
+
+    &.jkplayer-volume-muted {
         #jkplayer-controls {
             #jkplayer-volume-box {
                 #jkplayer-volume-button {
@@ -319,20 +468,31 @@
         }
     }
 
-    &.jkplayer-hidden-controls {
+    &.jkplayer-volume-max {
         #jkplayer-controls {
-            bottom: -39px;
-
-            #jkplayer-settings-box {
-                #jkplayer-settings-menu {
-                    display: none !important;
+            #jkplayer-volume-box {
+                #jkplayer-volume-button {
+                    mask-image: url("../icons/volume-max.svg");
                 }
             }
         }
     }
 
+    &.jkplayer-hidden-controls {
+        #jkplayer-controls {
+            bottom: -51px;
+
+            // #jkplayer-settings-box {
+            //     #jkplayer-settings-menu {
+            //         display: none !important;
+            //     }
+            // }
+        }
+    }
+
     &.jkplayer-open-settings {
         #jkplayer-controls {
+            bottom: 0 !important;
             #jkplayer-settings-box {
                 #jkplayer-settings-button {
                     transform: rotate(90deg);
@@ -340,6 +500,23 @@
 
                 #jkplayer-settings-menu {
                     display: block;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 500px) {
+    #jkplayer-box {
+        #jkplayer-duration-time {
+            display: none;
+        }
+
+        #jkplayer-controls {
+            #jkplayer-volume-box {
+                min-width: 14px;
+                #jkplayer-volume-range {
+                    display: none;
                 }
             }
         }

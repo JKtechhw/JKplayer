@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
 body {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   padding: 0;
   margin: 0;
   display: flex;
@@ -18,4 +18,26 @@ body h1 {
 #container {
   max-width: 1200px;
   width: 100%;
+}
+#container video {
+  width: 100%;
+}
+#container #socials {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin: 10px 0;
+}
+#container #socials .github {
+  max-height: 100%;
+  position: relative;
+  transition: opacity 0.2s;
+}
+#container #socials .github:hover {
+  opacity: 0.8;
+}
+#container #socials .github img {
+  height: 40px;
 }/*# sourceMappingURL=demo.css.map */
