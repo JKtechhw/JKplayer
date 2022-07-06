@@ -1,7 +1,7 @@
 'use struct';
 
 class JKplayer {
-    constructor(targetID, settings, videoData = {}) {
+    constructor(targetID, settings = [], videoData = {}) {
         this.targetVideoNode = document.querySelector(targetID);
         if(this.targetVideoNode) {
             if(this.targetVideoNode.nodeName.toLowerCase() === "video") {
@@ -9,6 +9,7 @@ class JKplayer {
                 //TODO check media status
                 this.preloadIcons("/src/icons/");
                 this.buildVideoBox();
+                this.checkSubtitles();
                 this.setPlayer();
                 this.setEvents();
 
@@ -81,11 +82,17 @@ class JKplayer {
         //Apend existing video element
         this.videoBox.appendChild(this.targetVideoNode.cloneNode(true));
 
+        //Create poster box
         this.posterBox = document.createElement("div");
         this.posterBox.id = "jkplayer-poster";
         this.posterBox.style.backgroundImage = `url(${this.targetVideoNode.poster})`;
         this.targetVideoNode.removeAttribute("poster");
         this.videoBox.appendChild(this.posterBox);
+
+        //Create captions box
+        this.captionsBox = document.createElement("div");
+        this.captionsBox.id = "jkplayer-captions";
+        this.videoBox.appendChild(this.captionsBox);
 
         //Build controls panel
         this.buildControlsPanel();
@@ -543,7 +550,7 @@ class JKplayer {
         let aspectRatio = gcd(this.videoElement.videoHeight, this.videoElement.videoWidth)
         this.videoBox.style.aspectRatio = `${this.videoElement.videoWidth / aspectRatio} / ${this.videoElement.videoHeight / aspectRatio}`;
 
-        setInterval(this.getBufferedTimeline.bind(this), 10000);
+        //setInterval(this.getBufferedTimeline.bind(this), 10000);
     }
 
     getBufferedTimeline() {
@@ -770,14 +777,96 @@ class JKplayer {
     }
 
     toggleSubtitles() {
-        console.log("Toggling subtitles");
         if(this.videoBox.classList.contains("jkplayer-subtitles-enabled")) {
             this.videoBox.classList.remove("jkplayer-subtitles-enabled");
+            this.videoElement.textTracks[0].mode = "disabled";
+            this.videoElement.textTracks[0].removeEventListener('cuechange', this.changeCues.bind(this));
         }
 
         else {
             this.videoBox.classList.add("jkplayer-subtitles-enabled");
+            let activeCues = this.videoElement.textTracks[0];
+            activeCues.mode = "hidden";
+            this.videoElement.textTracks[0].addEventListener('cuechange', this.changeCues.bind(this));
         }
+    }
+
+    changeCues(e) {
+        let activeCues = e.srcElement; 
+        if(activeCues.activeCues[0]) {
+            this.captionsBox.innerHTML = activeCues.activeCues[0].text;
+        }
+
+        else {
+            this.captionsBox.innerText = "";
+        }
+    }
+
+    checkSubtitles() {
+        let textTracks = this.videoElement.querySelectorAll("track")
+        textTracks.forEach(async track => {
+            if(track.src.substring(track.src.lastIndexOf('.')+1) === "srt") {
+                let captions = await fetch(track.src);
+                captions = await captions.text();
+                captions = this.srtToVtt(captions);
+                const blob = new Blob([captions], {type : "text/plain;charset=utf-8"});
+                track.src = URL.createObjectURL(blob);
+            }
+        });
+    }
+
+    srtToVtt(data) {
+        let srt = data.replace(/\r+/g, '');
+        srt = srt.replace(/^\s+|\s+$/g, '');
+        let cuelist = srt.split('\n\n');
+        let result = "";
+
+        let convertSrtCue = (caption) => {
+            caption = caption.replace(/<[a-zA-Z\/][^>]*>/g, '');
+            let cue = "";
+            let s = caption.split(/\n/);
+            while (s.length > 3) {
+                for (let i = 3; i < s.length; i++) {
+                    s[2] += "\n" + s[i]
+                }
+                s.splice(3, s.length - 3);
+            }
+    
+            let line = 0;
+            if (!s[0].match(/\d+:\d+:\d+/) && s[1].match(/\d+:\d+:\d+/)) {
+                cue += s[0].match(/\w+/) + "\n";
+                line += 1;
+            }
+    
+            if (s[line].match(/\d+:\d+:\d+/)) {
+                let m = s[1].match(/(\d+):(\d+):(\d+)(?:,(\d+))?\s*--?>\s*(\d+):(\d+):(\d+)(?:,(\d+))?/);
+                if (m) {
+                    cue += m[1]+":"+m[2]+":"+m[3]+"."+m[4]+" --> "+m[5]+":"+m[6]+":"+m[7]+"."+m[8]+"\n";
+                    line += 1;
+                }
+    
+                else {
+                    return "";
+                }
+            }
+    
+            else {
+                return "";
+            }
+    
+            if (s[line]) {
+              cue += s[line] + "\n\n";
+            }
+            return cue;
+        }
+
+        if (cuelist.length > 0) {
+          result += "WEBVTT\n\n";
+          for (let i = 0; i < cuelist.length; i=i+1) {
+            result += convertSrtCue(cuelist[i]);
+          }
+        }
+        return result;
     }
 
     timeFromSeconds(seconds) {

@@ -8,6 +8,13 @@
         --player-border-radius: 10px;
         --player-box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.59);
         --theme-color: #00b2ff;
+        --video-background-color: #000000;
+
+        //Captions
+        --captions-background-color: #0000008e;
+        --captions-color: #ffffff;
+        --captions-font: var(--controls-font-family);
+        --captions-size: 1.8vh;
 
         //Controls
         --controls-buttons-size: 17px;
@@ -49,6 +56,7 @@
         display: flex;
         border-radius: var(--player-border-radius);
         box-shadow: var(--player-box-shadow);
+        background-color: var(--video-background-color);
     }
 
     #jkplayer-poster {
@@ -62,6 +70,29 @@
         height: 100%;
         background-color: var(--poster-background-color);
         border-radius: var(--player-border-radius);
+    }
+
+    #jkplayer-captions {
+        display: none;
+        position: absolute;
+        left: 50%;
+        bottom: 50px;
+        transform: translateX(-50%);
+        text-align: center;
+        font-family: var(--captions-font);
+        background-color: var(--captions-background-color);
+        color: var(--captions-color);
+        font-size: var(--captions-size);
+        padding: 3px 8px;
+        box-sizing: border-box;
+        border-radius: 3px;
+        transition: bottom 0.2s;
+        user-select: none;
+        pointer-events: none;
+
+        &:empty {
+            opacity: 0;
+        }
     }
 
     #jkplayer-center-play-button, #jkplayer-center-replay-button {
@@ -440,11 +471,19 @@
                 mask-image: url("../icons/captions.svg");
             }
         }
+
+        #jkplayer-captions {
+            display: block;
+        }
     }
 
     &.jkplayer-paused, &.jkplayer-pip {
         #jkplayer-controls {
             bottom: 0 !important;
+        }
+
+        #jkplayer-captions {
+            bottom: 50px !important;
         }
 
         &.jkplayer-open-settings {
@@ -481,16 +520,18 @@
     &.jkplayer-hidden-controls {
         #jkplayer-controls {
             bottom: -51px;
+        }
 
-            // #jkplayer-settings-box {
-            //     #jkplayer-settings-menu {
-            //         display: none !important;
-            //     }
-            // }
+        #jkplayer-captions {
+            bottom: 20px;
         }
     }
 
     &.jkplayer-open-settings {
+        #jkplayer-captions {
+            bottom: 50px !important;
+        }
+        
         #jkplayer-controls {
             bottom: 0 !important;
             #jkplayer-settings-box {

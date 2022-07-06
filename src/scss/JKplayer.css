@@ -4,6 +4,11 @@
   --player-border-radius: 10px;
   --player-box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.59);
   --theme-color: #00b2ff;
+  --video-background-color: #000000;
+  --captions-background-color: #0000008e;
+  --captions-color: #ffffff;
+  --captions-font: var(--controls-font-family);
+  --captions-size: 1.8vh;
   --controls-buttons-size: 17px;
   --controls-color: #ffffff;
   --remain-time-color: var(--controls-color);
@@ -36,6 +41,7 @@
   display: flex;
   border-radius: var(--player-border-radius);
   box-shadow: var(--player-box-shadow);
+  background-color: var(--video-background-color);
 }
 #jkplayer-box #jkplayer-poster {
   position: absolute;
@@ -48,6 +54,30 @@
   height: 100%;
   background-color: var(--poster-background-color);
   border-radius: var(--player-border-radius);
+}
+#jkplayer-box #jkplayer-captions {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: 50px;
+  transform: translateX(-50%);
+  text-align: center;
+  font-family: var(--captions-font);
+  background-color: var(--captions-background-color);
+  color: var(--captions-color);
+  font-size: var(--captions-size);
+  padding: 3px 8px;
+  box-sizing: border-box;
+  border-radius: 3px;
+  transition: bottom 0.2s;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  pointer-events: none;
+}
+#jkplayer-box #jkplayer-captions:empty {
+  opacity: 0;
 }
 #jkplayer-box #jkplayer-center-play-button, #jkplayer-box #jkplayer-center-replay-button {
   cursor: pointer;
@@ -402,8 +432,14 @@
   -webkit-mask-image: url("../icons/captions.svg");
           mask-image: url("../icons/captions.svg");
 }
+#jkplayer-box.jkplayer-subtitles-enabled #jkplayer-captions {
+  display: block;
+}
 #jkplayer-box.jkplayer-paused #jkplayer-controls, #jkplayer-box.jkplayer-pip #jkplayer-controls {
   bottom: 0 !important;
+}
+#jkplayer-box.jkplayer-paused #jkplayer-captions, #jkplayer-box.jkplayer-pip #jkplayer-captions {
+  bottom: 50px !important;
 }
 #jkplayer-box.jkplayer-paused.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu, #jkplayer-box.jkplayer-pip.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
   display: block !important;
@@ -418,6 +454,12 @@
 }
 #jkplayer-box.jkplayer-hidden-controls #jkplayer-controls {
   bottom: -51px;
+}
+#jkplayer-box.jkplayer-hidden-controls #jkplayer-captions {
+  bottom: 20px;
+}
+#jkplayer-box.jkplayer-open-settings #jkplayer-captions {
+  bottom: 50px !important;
 }
 #jkplayer-box.jkplayer-open-settings #jkplayer-controls {
   bottom: 0 !important;

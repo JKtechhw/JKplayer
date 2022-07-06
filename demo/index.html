@@ -12,12 +12,11 @@
     <h1>JKplayer</h1>
     <div id="container">
         <video controls id="player" poster="./Images/poster.jpg">
-            <!-- <source src="./videos/Mr.Robot-1.1.m4v" type="video/mp4" size="1080" /> -->
-            <!-- <source src="./videos/timer.m4v" type="video/mp4" size="1080" /> -->
-            <source src="./videos/david-gilmour-pompeii.m4v" type="video/mp4" size="1080" />
+            <source src="./videos/Mr.Robot-1.1.m4v" type="video/mp4" size="1080" />
+            <source src="./videos/timer.m4v" type="video/mp4" size="1080" />
 
-            <!-- <track kind="captions" label="Česky" srclang="cs" src="videos/Mr.Robot-1.1-cs.vtt" default />
-            <track kind="captions" label="English" srclang="en" src="videos/Mr.Robot-1.1-en.vtt" /> -->
+            <track kind="captions" label="Česky" srclang="cs" src="videos/Mr.Robot-1.1-cs.srt" />
+            <track kind="captions" label="English" srclang="en" src="videos/Mr.Robot-1.1-en.vtt" />
         </video>
 
         <div id="socials">
@@ -29,34 +28,7 @@
 
     <script src="/src/js/JKplayer.js"></script>
     <script>
-        let videoData = {
-            "chapters": [
-                {name: "5 A.M.", position: "00:00", color: "orange"},
-                {name: "Rattle That Lock", position: "3:13", color: "orange"},
-                {name: "Faces of Stone", position: "8:35", color: "orange"},
-                {name: "What Do You Want From Me", position: "14:35", color: "green"},
-                {name: "The Blue", position: "19:10", color: "orange"},
-                {name: "The Great Gig in the Sky", position: "25:40", color: "green"},
-                {name: "A Boat Lies Waiting", position: "31:40", color: "orange"},
-                {name: "Wish You Were Here", position: "36:35", color: "green"},
-                {name: "Money", position: "41:55", color: "green"},
-                {name: "In Any Tongue", position: "50:10", color: "orange"},
-                {name: "High Hopes", position: "58:05", color: "green"},
-                {name: "One of These Days", position: "1:08:15", color: "green"},
-                {name: "Shine On You Crazy Diamond (Pts. 1-5)", position: "1:14:50", color: "green"},
-                {name: "Fat Old Sun", position: "1:27:25", color: "orange"},
-                {name: "Coming Back to Life", position: "1:33:25", color: "orange"},
-                {name: "On an Island", position: "1:40:40", color: "orange"},
-                {name: "Today", position: "1:47:45", color: "orange"},
-                {name: "Sorrow", position: "1:54:20", color: "orange"},
-                {name: "Run Like Hell", position: "2:05:10", color: "green"},
-                {name: "Time / Breathe (In The Air)", position: "2:12:30", color: "green"},
-                {name: "Comfortably Numb", position: "2:19:10", color: "green"},
-                {name: "Konec", position: "2:27:55"}
-            ]
-        }
-
-        const player = new JKplayer("#player", [], videoData);
+        const player = new JKplayer("#player");
     </script>
 </body>
 </html>
