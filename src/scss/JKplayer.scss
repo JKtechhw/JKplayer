@@ -32,9 +32,10 @@
 
         //Ranges
         --range-background-color: #ffffff50;
-        --range-thumb-color: #ffffff;
         --range-height: 7px;
-        --range-thumb-size: 15px;
+        --range-thumb-color: #ffffff;
+        --range-thumb-size: 14px;
+        --range-thumb-border-color: rgba(255, 255, 255, 0.2);
 
         //Poster
         --poster-background-color: #000000;
@@ -146,9 +147,13 @@
         width: var(--center-play-button-size);
         height: var(--center-play-button-size);
         opacity: 1;
-        transition: 0.2s opacity, 0.2s height, 0.2s width;
+        transition: 0.2s opacity, 0.2s height, 0.2s width, 0.2s border-radius ease-in-out;
         outline: none;
         overflow: hidden;
+
+        &:hover {
+            border-radius: 5px;
+        }
 
         &::after {
             content: "";
@@ -219,7 +224,6 @@
             flex: 7;
             margin: 0 var(--controls-spacing);
             position: relative;
-            //height: calc(var(--range-height) * 3);
             box-sizing: border-box;
             display: flex;
             align-items: center;
@@ -240,7 +244,7 @@
                 #jkplayer-timeline-range-current {
                     z-index: 3;
 
-                    &::after {
+                    &::before {
                         content: "";
                         position: absolute;
                         right: calc(var(--range-thumb-size) / -2);
@@ -329,7 +333,7 @@
             display: flex;
             align-items: center;
             max-width: 150px;
-            min-width: 100px;
+            min-width: 110px;
             margin: var(--controls-spacing);
 
             #jkplayer-volume-button {
@@ -344,6 +348,14 @@
                 border-radius: var(--range-height);
                 position: relative;
                 user-select: none;
+
+                &:active {
+                    #jkplayer-volume-active {
+                        &::after {
+                            border: 2px solid var(--range-thumb-border-color);
+                        }
+                    }
+                }
 
                 #jkplayer-volume-active {
                     position: absolute;
@@ -364,6 +376,7 @@
                         width: var(--range-thumb-size);
                         background-color: var(--range-thumb-color);
                         border-radius: var(--range-thumb-size);
+                        transition: border 0.2s;
                     }
                 }
             }

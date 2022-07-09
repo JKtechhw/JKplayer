@@ -21,9 +21,10 @@
   --controls-spacing: 5px;
   --control-box-spacing: 5px 15px 15px 15px;
   --range-background-color: #ffffff50;
-  --range-thumb-color: #ffffff;
   --range-height: 7px;
-  --range-thumb-size: 15px;
+  --range-thumb-color: #ffffff;
+  --range-thumb-size: 14px;
+  --range-thumb-border-color: rgba(255, 255, 255, 0.2);
   --poster-background-color: #000000;
   --settings-menu-background: #ffffffcc;
   --settings-menu-background-hover: var(--theme-color);
@@ -127,9 +128,12 @@
   width: var(--center-play-button-size);
   height: var(--center-play-button-size);
   opacity: 1;
-  transition: 0.2s opacity, 0.2s height, 0.2s width;
+  transition: 0.2s opacity, 0.2s height, 0.2s width, 0.2s border-radius ease-in-out;
   outline: none;
   overflow: hidden;
+}
+#jkplayer-box #jkplayer-center-play-button:hover, #jkplayer-box #jkplayer-center-replay-button:hover {
+  border-radius: 5px;
 }
 #jkplayer-box #jkplayer-center-play-button::after, #jkplayer-box #jkplayer-center-replay-button::after {
   content: "";
@@ -219,7 +223,7 @@
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-range #jkplayer-timeline-range-current {
   z-index: 3;
 }
-#jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-range #jkplayer-timeline-range-current::after {
+#jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-range #jkplayer-timeline-range-current::before {
   content: "";
   position: absolute;
   right: calc(var(--range-thumb-size) / -2);
@@ -306,7 +310,7 @@
   display: flex;
   align-items: center;
   max-width: 150px;
-  min-width: 100px;
+  min-width: 110px;
   margin: var(--controls-spacing);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
@@ -324,6 +328,9 @@
      -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range:active #jkplayer-volume-active::after {
+  border: 2px solid var(--range-thumb-border-color);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range #jkplayer-volume-active {
   position: absolute;
@@ -343,6 +350,7 @@
   width: var(--range-thumb-size);
   background-color: var(--range-thumb-color);
   border-radius: var(--range-thumb-size);
+  transition: border 0.2s;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-duration-time, #jkplayer-box #jkplayer-controls #jkplayer-current-time {
   color: var(--remain-time-color);
