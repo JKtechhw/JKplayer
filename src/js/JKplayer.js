@@ -3,29 +3,39 @@
 class JKplayer {
     constructor(targetID, settings = [], videoData = {}) {
         this.targetVideoNode = document.querySelector(targetID);
+        this.playerSettings = settings;
         if(this.targetVideoNode) {
             if(this.targetVideoNode.nodeName.toLowerCase() === "video") {
-                this.videoData = videoData;
-                //TODO check media status
-                this.preloadIcons("/src/icons/");
-                this.buildVideoBox();
-                this.checkSubtitles();
-                this.setPlayer();
-                this.setEvents();
+                if(this.checkMediaStatus()) {
+                    this.videoData = videoData;
 
-                if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-                    console.log("Mobile device");
-                    this.setMobileEvents();
+                    this.translateObject = {
+                        download: "Stáhnout",
+                        quality: "Kvalita",
+                        captions: "Titulky",
+                        speed: "Rychlost",
+                        cantPlayVideo: "Video nelze přehrát"
+                    }
+
+                    this.preloadIcons("/src/icons/");
+                    this.buildVideoBox();
+                    this.checkCaptions();
+                    this.setPlayer();
+                    this.setEvents();
+
+                    if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+                        this.setMobileEvents();
+                    }
+
+                    else {
+                        this.setDesktopEvents();
+                    }
+
+                    this.setKeys();
+                    this.generateTimelineThumbPreview();
+                    this.loadLocalStorage();
+                    this.clean();
                 }
-
-                else {
-                    console.log("Desktop");
-                    this.setDesktopEvents();
-                }
-
-                this.setKeys();
-                this.generateTimelineThumbPreview();
-                this.clean();
             }
 
             else {
@@ -38,12 +48,70 @@ class JKplayer {
         }
     }
 
+    checkMediaStatus() {
+        if(this.targetVideoNode.currentSrc) {
+            return true;
+        }
+
+        else {
+            console.error("Video source isn't provided");
+            this.errorScreen(this.translateObject.cantPlayVideo);
+            return false;
+        }
+    }
+
+    checkCaptions() {
+        let textTracks = this.videoElement.querySelectorAll("track");
+        textTracks.forEach(async track => {
+            if(track.src.substring(track.src.lastIndexOf('.')+1) === "srt") {
+                let captions = await fetch(track.src);
+                captions = await captions.text();
+                if(captions.includes("�")) {
+                    //TODO Convert to UTF-8
+                    console.log("File isnt utf-8")
+                }
+                captions = this.srtToVtt(captions);
+                const blob = new Blob([captions], {type : "text/plain;charset=utf-8"});
+                track.src = URL.createObjectURL(blob);
+            }
+        });
+    }
+
+    errorScreen(message) {
+        let errorBox = document.createElement("div");
+        errorBox.id = "jkplayer-error-box";
+        errorBox.innerText = message;
+        this.targetVideoNode.replaceWith(errorBox);
+    }
+
+    loadLocalStorage() {
+        let settings = JSON.parse(localStorage.getItem("jkplayer"));
+        if(settings) {
+            settings.volume ? this.videoElement.volume = settings.volume : this.videoElement.volume = this.playerSettings.volume || 1;
+            settings.muted ? this.videoElement.muted = true : this.videoElement.muted = false;
+            settings.speed ? this.videoElement.playbackRate = settings.speed : this.videoElement.playbackRate = 1;
+            settings.captions ? this.toggleCaptions() : null;
+        }
+
+        else {
+            localStorage.setItem("jkplayer", "{}");
+        }
+    }
+
+    updateStorage(name, value) {
+        let settings = JSON.parse(localStorage.getItem("jkplayer"));
+        settings[name] = value;
+        localStorage.setItem("jkplayer", JSON.stringify(settings));
+    }
+
     preloadIcons(pathToIcons) {
         let icons = [
             "captions-disabled.svg",
             "captions.svg",
             "compress.svg",
             "expand.svg",
+            "check.svg",
+            "left.svg",
             "pause.svg",
             "pip.svg",
             "play.svg",
@@ -56,8 +124,9 @@ class JKplayer {
         ]
 
         icons.forEach(imageName => {
-            let img = new Image();
-            img.src = pathToIcons + imageName;
+            let XHR = new XMLHttpRequest();
+            XHR.open("GET", pathToIcons + imageName);
+            XHR.send();
         });
     }
 
@@ -83,11 +152,28 @@ class JKplayer {
         this.videoBox.appendChild(this.targetVideoNode.cloneNode(true));
 
         //Create poster box
-        this.posterBox = document.createElement("div");
-        this.posterBox.id = "jkplayer-poster";
-        this.posterBox.style.backgroundImage = `url(${this.targetVideoNode.poster})`;
-        this.targetVideoNode.removeAttribute("poster");
-        this.videoBox.appendChild(this.posterBox);
+        if(this.targetVideoNode.poster) {
+            this.posterBox = document.createElement("div");
+            this.posterBox.id = "jkplayer-cover";
+            this.posterBox.style.backgroundImage = `url(${this.targetVideoNode.poster})`;
+            this.targetVideoNode.removeAttribute("poster");
+            this.videoBox.appendChild(this.posterBox);
+        }
+
+        //Skiptime box
+        this.displayMessaagesBox = document.createElement("div");
+        this.displayMessaagesBox.id = "jkplayer-poster";
+        this.videoBox.appendChild(this.displayMessaagesBox);
+
+        this.skipTimeLeft = document.createElement("div");
+        this.skipTimeLeft.id = "jkplayer-skip-time-left";
+        this.skipTimeLeft.innerText = "10s";
+        this.displayMessaagesBox.appendChild(this.skipTimeLeft);
+
+        this.skipTimeRight = document.createElement("div");
+        this.skipTimeRight.id = "jkplayer-skip-time-right";
+        this.skipTimeRight.innerText = "10s";
+        this.displayMessaagesBox.appendChild(this.skipTimeRight);
 
         //Create captions box
         this.captionsBox = document.createElement("div");
@@ -108,6 +194,9 @@ class JKplayer {
         this.videoBox.appendChild(this.centerReplayButton);
 
         this.videoElement = this.videoBox.querySelector("video");
+        this.videoElement.addEventListener("error", () => {
+            console.error("Errror more")
+        });
         this.targetVideoNode.replaceWith(this.videoBox);
     }
 
@@ -173,26 +262,28 @@ class JKplayer {
         this.volumeBox.id = "jkplayer-volume-box";
         this.videoControlsBox.appendChild(this.volumeBox);
 
-        //Create volume color
+        //Create volume button
         this.volumeButton = document.createElement("button");
         this.volumeButton.id = "jkplayer-volume-button";
         this.volumeButton.className = "jkplayer-controls-button";
         this.volumeBox.appendChild(this.volumeButton);
 
-        //Create volume slides
-        this.volumeSlider = document.createElement("input");
+        //Create volume button
+        this.volumeSlider = document.createElement("div");
         this.volumeSlider.id = "jkplayer-volume-range";
-        this.volumeSlider.type = "range";
-        this.volumeSlider.min = 0;
-        this.volumeSlider.max = 1;
-        this.volumeSlider.step = 0.05;
         this.volumeBox.appendChild(this.volumeSlider);
 
-        //Subtitles button
-        this.subtitlesButton = document.createElement("button");
-        this.subtitlesButton.id = "jkplayer-subtitles-button"
-        this.subtitlesButton.className = "jkplayer-controls-button";
-        this.videoControlsBox.appendChild(this.subtitlesButton);
+        this.volumeActive = document.createElement("div");
+        this.volumeActive.id = "jkplayer-volume-active";
+        this.volumeSlider.appendChild(this.volumeActive);
+
+        //Captions button
+        if(this.targetVideoNode.textTracks.length != 0) {
+            this.captionsButton = document.createElement("button");
+            this.captionsButton.id = "jkplayer-subtitles-button"
+            this.captionsButton.className = "jkplayer-controls-button";
+            this.videoControlsBox.appendChild(this.captionsButton);   
+        }
 
         //Settings box
         this.settingsBox = document.createElement("div");
@@ -210,27 +301,7 @@ class JKplayer {
         this.settingsMenu.id = "jkplayer-settings-menu";
         this.settingsBox.appendChild(this.settingsMenu);
 
-        //TODO load data from config
-        let options = [
-            { name: "Titulky", active: "Vypnuto", value: ["Česky", "Anglicky", "Německy", "Španělsky"]},
-            { name: "Kvalita", active: "1080", value: ["1080", "720", "480", "360", "240", "144"]},
-            { name: "Rychlost", active: "1x", value: ["0.25","0.50","0.75","1","1.25","1.50","1.75", "2"]}
-        ]
-
-        //Create options
-        options.forEach(element => {
-            let option = document.createElement("div");
-            let optionName = document.createElement("span");
-            optionName.classList.add("jktech-config-option-name");
-            optionName.innerText = element.name;
-            option.appendChild(optionName);
-            let optionValue = document.createElement("span");
-            optionValue.classList.add("jktech-config-option-value");
-            optionValue.innerText = element.active;
-            option.appendChild(optionValue);
-            option.classList.add("jktech-config-option");
-            this.settingsMenu.appendChild(option);
-        });
+        this.buildSettingsBox();
 
         //Fullscreen button
         this.fullscreenButton = document.createElement("button");
@@ -239,21 +310,108 @@ class JKplayer {
         this.videoControlsBox.appendChild(this.fullscreenButton);
     }
 
+    buildSettingsBox() {
+        //TODO load data from config
+        let options = [];
+
+        if(this.targetVideoNode.textTracks.length > 0) {
+            let captionsOption = {
+                name: "Titulky", active: "Vypnuto", value: ["Vypnuto"]
+            }
+
+            for(let i = 0; i < this.targetVideoNode.textTracks.length; i++) {
+                captionsOption.value.push(this.targetVideoNode.textTracks[i].label);
+            }
+
+            options.push(captionsOption);
+        }
+
+        let videoSources = this.targetVideoNode.querySelectorAll("source");
+
+        if(videoSources.length > 1) {
+            let qualityOption = {
+                name: this.translateObject.quality, active: "Auto", value: ["Auto"]
+            }
+
+            for(let i = 0; i < videoSources.length; i++) {
+                qualityOption.value.push(videoSources[i].getAttribute("size"));
+            }
+
+            options.push(qualityOption);
+
+            if(this.playerSettings && this.playerSettings.allowDownload) {
+                qualityOption.value.shift()
+                let videoSpeed = { name: this.translateObject.download, active: "", value: qualityOption.value};
+                options.push(videoSpeed);
+            }
+        }
+
+        else {
+            if(this.playerSettings && this.playerSettings.allowDownload) {
+                let videoSpeed = { name: "Stáhnout", active: "1", value: []};
+                options.push(videoSpeed);
+            }
+        }
+
+        let videoSpeed = { name: "Rychlost", active: "1", value: ["0.25","0.50","0.75","1","1.25","1.50","1.75", "2"]};
+        options.splice(options.length - 1, 0, videoSpeed);
+
+        let mainScreen = document.createElement("div");
+        mainScreen.classList.add("jkplayer-settings-screen");
+        mainScreen.classList.add("jkplayer-settings-screen-main");
+        this.settingsMenu.appendChild(mainScreen);
+
+        options.forEach(option => {
+            let optionElement = document.createElement("div");
+            optionElement.classList.add("jkplayer-settions-option");
+            optionElement.innerText = option.name;
+            mainScreen.appendChild(optionElement);
+
+            let optionScreen = document.createElement("div");
+            optionScreen.classList.add("jkplayer-settings-screen");
+            optionScreen.setAttribute("hidden", "");
+            let optionScreenHeader = document.createElement("div");
+            optionScreenHeader.innerText = option.name;
+            optionScreenHeader.classList.add("jkplayer-settings-screen-header");
+            optionScreen.appendChild(optionScreenHeader);
+
+            optionElement.addEventListener("click", () => {
+                this.settingsMenu.querySelector(".jkplayer-settings-screen:not([hiddden])").setAttribute("hidden", "")
+                optionScreen.removeAttribute("hidden");
+            });
+
+            optionScreenHeader.addEventListener("click", () => {
+                optionScreen.setAttribute("hidden", "");
+                mainScreen.removeAttribute("hidden");
+            });
+
+            option.value.forEach(submenuOption => {
+                let optionElement = document.createElement("div");
+                optionElement.classList.add("jkplayer-settions-option");
+                if(option.active === submenuOption) optionElement.classList.add("active");
+                optionElement.innerText = submenuOption;
+                optionScreen.appendChild(optionElement);
+            });
+
+            this.settingsMenu.appendChild(optionScreen);
+        });
+    }
+
     addChapters(chapters) {
-        let videoDuration = this.videoDuration / 100;
         if(chapters) {
-            console.log("Adding Chapters");
+            let videoDuration = this.videoDuration / 100;
             chapters.forEach((chapterData, index) => {
-                if(isNaN(chapterData.position)) {
-                    chapterData.position = this.secondsFromTime(chapterData.position);
+                if(isNaN(chapterData.time)) {
+                    chapterData.time = this.secondsFromTime(chapterData.time);
                 }
-                if(chapterData.position <= this.videoDuration && chapterData.position >= 0) {
+
+                if(chapterData.time <= this.videoDuration && chapterData.time >= 0) {
                     let chapter = document.createElement("div");
                     chapter.classList.add("jkplayer-chapter");
-                    chapter.style.left = (chapterData.position / videoDuration) + "%";
+                    chapter.style.left = (chapterData.time / videoDuration) + "%";
                     chapter.style.backgroundColor = chapterData.color;
-                    let endTime = chapters[index + 1] ? this.secondsFromTime(chapters[index + 1].position) : this.videoDuration;
-                    chapter.style.width = `calc(${this.widthFromTime(endTime - chapterData.position)}% - 3px)`;
+                    let endTime = chapters[index + 1] ? this.secondsFromTime(chapters[index + 1].time) : this.videoDuration;
+                    chapter.style.width = `calc(${this.widthFromTime(endTime - chapterData.time)}% - 3px)`;
                     chapter.dataset.name = chapterData.name || "";
                     this.timelistChaptersBox.appendChild(chapter);
                 }
@@ -265,7 +423,6 @@ class JKplayer {
         }
 
         else {
-            console.log("No chapters are provided");
             let chapter = document.createElement("div");
             chapter.classList.add("jkplayer-chapter");
             chapter.style.width = "100%";
@@ -277,28 +434,27 @@ class JKplayer {
     setEvents() {
         //Prevent context menu
         this.videoBox.addEventListener("contextmenu", (e) => {
-            console.log("Context menu prevented");
             e.preventDefault();
         });
 
-        //Video onload data
-        this.videoElement.addEventListener("loadeddata", this.videoOnload.bind(this));
-
-        this.posterBox.addEventListener("click", () => {
+        if(this.posterBox) this.posterBox.addEventListener("click", () => {
             this.videoElement.play();
             this.posterBox.remove();
-            delete this.posterBox;
         })
+
+        //Video onload data
+        this.videoElement.addEventListener("loadedmetadata", this.videoOnload.bind(this));
 
         //Reply
         this.videoElement.addEventListener("ended", () => {
             this.videoBox.classList.add("jkplayer-replay");
         });
 
-        this.centerReplayButton.addEventListener("click", () => {
-            this.videoBox.classList.remove("jkplayer-replay");
-            this.videoElement.play();
-        }); 
+        //Video duration change
+        this.videoElement.addEventListener("durationchange", () => {
+            this.videoDuration = this.videoElement.duration;
+            this.videoLengthSpan.innerText = this.timeFromSeconds(this.videoDuration);
+        });
 
         //Fullscreen
         this.fullscreenButton.addEventListener("click", this.toggleFullscreen.bind(this));
@@ -321,51 +477,70 @@ class JKplayer {
             this.videoBox.classList.remove("jkplayer-playing");
         });
 
+        this.centerReplayButton.addEventListener("click", () => {
+            this.videoBox.classList.remove("jkplayer-replay");
+            this.videoElement.play();
+        });
+
         this.videoElement.addEventListener('play', () => {
+            if(this.posterBox) {
+                this.posterBox.remove();
+            }
+
             this.videoBox.classList.remove("jkplayer-paused");
             this.videoBox.classList.add("jkplayer-playing");
         });
 
         //Mute
         this.volumeButton.addEventListener("click", this.toggleMute.bind(this));
-        this.videoElement.addEventListener("volumechange", (e) => {
-            if(e.target.volume === 0 || e.target.muted) {
-                this.videoBox.classList.add("jkplayer-volume-muted");
-                this.videoBox.classList.remove("jkplayer-volume-max");
-                this.volumeSlider.value = 0;
-            }
 
-            else if(e.target.volume >= 0.7) {
-                this.videoBox.classList.add("jkplayer-volume-max");
-                this.videoBox.classList.remove("jkplayer-volume-muted");
-                this.volumeSlider.value = this.videoElement.volume;
+        //Volume
+        this.videoElement.addEventListener("volumechange", () => {
+            this.updateStorage("volume", this.videoElement.volume);
+            if(this.videoElement.volume === 0 || this.videoElement.muted) {
+                this.videoBox.classList.add("jkplayer-muted");
             }
 
             else {
-                this.videoBox.classList.remove("jkplayer-volume-muted");
-                this.videoBox.classList.remove("jkplayer-volume-max");
-                this.volumeSlider.value = this.videoElement.volume;
+                this.videoBox.classList.remove("jkplayer-muted");
+                this.videoElement.muted = false;
             }
+
+            this.volumeActive.style.width = Number(this.videoElement.volume * 100) + "%";
         });
 
-        this.volumeSlider.addEventListener("input", () => {
-            console.log("Video volume changed to " + this.volumeSlider.value);
-            this.videoElement.volume = this.volumeSlider.value;
+        let changeVolume = (e) => {
+            if(e.offsetX > 0) {
+                this.videoElement.muted = false;
+                let bounding = this.volumeSlider.getBoundingClientRect();
+                let value = ((e.clientX - bounding.left) / this.volumeSlider.offsetWidth);
+                value > 1 ? value = 1 : value;
+                value < 0 ? value = 0 : value;
+
+                this.volumeActive.style.width = (value * 100) + "%";
+                this.videoElement.volume = value;
+            }
+        }
+
+        this.volumeSlider.addEventListener("mousedown", (e) => {
+            changeVolume(e);
+            document.addEventListener("mousemove", changeVolume);
+
+            document.addEventListener("mouseup", () => {
+                document.removeEventListener("mousemove", changeVolume);
+            });
         });
 
         //Thumb events
         this.timelineBox.addEventListener("mouseenter", (e) => {
-            console.log("Display thumb");
             this.timelineThumb.style.display = "block";
         });
 
         this.timelineBox.addEventListener("mousemove", (e) => {
-            console.log("Update thumb");
             this.changeTimelineThumb(e);
         });
 
         this.timelineBox.addEventListener("mouseleave", (e) => {
-            console.log("Hide thumb");
             this.timelineThumb.style.display = "none";
         });
 
@@ -397,30 +572,20 @@ class JKplayer {
             document.addEventListener("mouseup", finalTimeUpdate);
         });
 
-        //Controls events
-        this.videoBox.addEventListener("mouseenter", () => {
-            console.log("Display controls");
-            this.videoBox.classList.remove("jkplayer-hidden-controls");
-        });
-
         //Subtitles
-        this.subtitlesButton.addEventListener("click", this.toggleSubtitles.bind(this));
-
-        this.videoBox.addEventListener("mouseleave", () => {
-            console.log("Hide controls");
-            this.videoBox.classList.add("jkplayer-hidden-controls");
-        });
+        if(this.captionsButton) this.captionsButton.addEventListener("click", this.toggleCaptions.bind(this));
 
         //Settings events
         let hideSettingsBox = (e) => {
             if(!this.settingsMenu.contains(e.target)) {
+                e.stopPropagation();
                 this.videoBox.classList.remove("jkplayer-open-settings");
                 document.removeEventListener("click", hideSettingsBox);
             }
         };
 
         this.settingsButton.addEventListener("click", (e) => {
-            e.stopPropagation()
+            e.stopPropagation();
             document.addEventListener("click", hideSettingsBox);
             this.videoBox.classList.toggle("jkplayer-open-settings");
         });
@@ -436,11 +601,11 @@ class JKplayer {
 
         //Loading
         this.videoElement.addEventListener("waiting", () => {
-            console.log("Loading");
+            this.videoBox.classList.add("jkplayer-loading");
         });
 
         this.videoElement.addEventListener("canplay", () => {
-            console.log("Loaded");
+            this.videoBox.classList.remove("jkplayer-loading");
         })
 
         //TODO loading effect
@@ -492,7 +657,7 @@ class JKplayer {
                     break;
 
                 case "KeyC": 
-                    this.toggleSubtitles();
+                    this.toggleCaptions();
                     break;
 
                 /*
@@ -513,15 +678,46 @@ class JKplayer {
         this.pipButton.addEventListener("click",this.togglePip.bind(this));
 
         //Play pause
-        this.videoElement.addEventListener("click", this.togglePlay.bind(this));
-
         this.videoElement.addEventListener("dblclick", (e) => {
             e.stopPropagation()
             this.toggleFullscreen();
         });
+        
+        this.videoElement.addEventListener("click", this.togglePlay.bind(this));
+
+        //Hide when not active
+
+        let awaitTimeout;
+        let controlsAwait = () => {
+            this.videoBox.classList.remove("jkplayer-hidden-controls");
+
+            if(awaitTimeout) {
+                clearTimeout(awaitTimeout);
+            }
+
+            awaitTimeout = setTimeout(() => {
+                this.videoBox.classList.add("jkplayer-hidden-controls");
+            }, 4000);
+
+            //TODO await time by config
+        }
+
+        //Controls events
+        this.videoBox.addEventListener("mouseenter", () => {
+            this.videoBox.classList.remove("jkplayer-hidden-controls");
+
+            document.addEventListener("mousemove", controlsAwait);
+        });
+
+        this.videoBox.addEventListener("mouseleave", () => {
+            this.videoBox.classList.add("jkplayer-hidden-controls");
+            document.removeEventListener("mousemove", controlsAwait);
+
+        });
     }
 
     setMobileEvents() {
+        this.videoBox.classList.add("jkplayer-mobile");
         this.videoElement.addEventListener("dblclick", (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -541,7 +737,6 @@ class JKplayer {
         this.videoLengthSpan.innerText = this.timeFromSeconds(this.videoDuration);
         this.currentTime.innerText = this.timeFromSeconds(this.videoElement.currentTime);
         this.addChapters(this.videoData.chapters);
-
         
         let gcd = function gcd (a, b) {
             return (b == 0) ? a : gcd (b, a%b);
@@ -549,14 +744,6 @@ class JKplayer {
 
         let aspectRatio = gcd(this.videoElement.videoHeight, this.videoElement.videoWidth)
         this.videoBox.style.aspectRatio = `${this.videoElement.videoWidth / aspectRatio} / ${this.videoElement.videoHeight / aspectRatio}`;
-
-        //setInterval(this.getBufferedTimeline.bind(this), 10000);
-    }
-
-    getBufferedTimeline() {
-        let buffered = this.videoElement.buffered.end(0);
-        //this.timelineBuffered.style.width = (buffered / this.videoDuration) * 100 + "%";
-        console.log(buffered)
     }
 
     changeTimelineThumb(e) {
@@ -566,7 +753,7 @@ class JKplayer {
         let progresstime = Math.floor(((e.clientX - timelineBound.left) / timelineWidth) * videoDuration);
         if(progresstime >= 0) {
             this.timelineThumbTime.innerText = this.timeFromSeconds(progresstime);
-            this.timelineThumb.style.left = `max(${e.clientX - timelineBound.left}px, 35px)`;
+            this.timelineThumb.style.left = `${e.clientX - timelineBound.left}px`;
 
             if(e.target.classList.contains("jkplayer-chapter")) {
                 this.timelineThumbName.innerText = e.target.dataset.name || "";
@@ -691,13 +878,11 @@ class JKplayer {
     toggleFullscreen() {
         if(document.fullscreenElement) {
             document.exitFullscreen();
-            console.log("Exiting full screen");
         }
         
         else {
             try {
                 this.videoBox.requestFullscreen();
-                console.log("Entering full screen");
             }
 
             catch(e) {
@@ -710,26 +895,22 @@ class JKplayer {
         this.videoBox.classList.remove("jkplayer-replay");
         if(this.videoElement.paused) {
             this.videoElement.play();
-            console.log("Play");
         }
 
         else {
             this.videoElement.pause();
-            console.log("Paused");
         }
     }
 
     toggleMute() {
         if(this.videoElement.muted) {
             this.videoElement.muted = false;
-            this.volumeSlider.value = this.prevVolume;
-            console.log("Unmuted");
+            this.updateStorage("muted", false);
         }
 
         else {
             this.videoElement.muted = true;
-            this.prevVolume = this.volumeSlider.value;
-            console.log("Muted");
+            this.updateStorage("muted", true);
         }
     }
 
@@ -751,6 +932,11 @@ class JKplayer {
         //TODO skip time by config
         if(direction === "-") {
             this.videoElement.currentTime -= 5;
+            this.skipTimeLeft.style.display = "block";
+
+            setTimeout(() => {
+                this.skipTimeLeft.style.display = "none";
+            }, 3000);
         }
 
         else if(direction === "start") {
@@ -763,6 +949,11 @@ class JKplayer {
 
         else {
             this.videoElement.currentTime += 5;
+            this.skipTimeRight.style.display = "block";
+
+            setTimeout(() => {
+                this.skipTimeRight.style.display = "none";
+            }, 3000);
         }
     }
 
@@ -776,22 +967,26 @@ class JKplayer {
         }
     }
 
-    toggleSubtitles() {
+    toggleCaptions(id = 0) {
         if(this.videoBox.classList.contains("jkplayer-subtitles-enabled")) {
             this.videoBox.classList.remove("jkplayer-subtitles-enabled");
-            this.videoElement.textTracks[0].mode = "disabled";
-            this.videoElement.textTracks[0].removeEventListener('cuechange', this.changeCues.bind(this));
+            this.videoElement.textTracks[id].mode = "disabled";
+            this.videoElement.textTracks[id].removeEventListener('cuechange', this.changeCues.bind(this));
+            this.updateStorage("captions", false);
         }
 
         else {
             this.videoBox.classList.add("jkplayer-subtitles-enabled");
-            let activeCues = this.videoElement.textTracks[0];
+            let activeCues = this.videoElement.textTracks[id];
             activeCues.mode = "hidden";
-            this.videoElement.textTracks[0].addEventListener('cuechange', this.changeCues.bind(this));
+            this.videoElement.textTracks[id].mode = "hidden"
+            this.videoElement.textTracks[id].addEventListener('cuechange', this.changeCues.bind(this));
+            this.updateStorage("captions", true);
         }
     }
 
     changeCues(e) {
+        //TODO select active
         let activeCues = e.srcElement; 
         if(activeCues.activeCues[0]) {
             this.captionsBox.innerHTML = activeCues.activeCues[0].text;
@@ -800,19 +995,6 @@ class JKplayer {
         else {
             this.captionsBox.innerText = "";
         }
-    }
-
-    checkSubtitles() {
-        let textTracks = this.videoElement.querySelectorAll("track")
-        textTracks.forEach(async track => {
-            if(track.src.substring(track.src.lastIndexOf('.')+1) === "srt") {
-                let captions = await fetch(track.src);
-                captions = await captions.text();
-                captions = this.srtToVtt(captions);
-                const blob = new Blob([captions], {type : "text/plain;charset=utf-8"});
-                track.src = URL.createObjectURL(blob);
-            }
-        });
     }
 
     srtToVtt(data) {

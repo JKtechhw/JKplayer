@@ -1,4 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+:root {
+  --body-background-color: #0a0810;
+  --text-color: #ffffff;
+  --toggle-theme-icon: url("../Images/sun.svg");
+}
+:root .light-theme {
+  --body-background-color: #ffffff;
+  --text-color: #000000;
+  --toggle-theme-icon: url("../Images/moon.svg");
+}
+
 body {
   width: 100vw;
   min-height: 100vh;
@@ -8,11 +19,13 @@ body {
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  background-color: #0a0810;
+  background-color: var(--body-background-color);
+  transition: background-color 0.2s;
 }
 body h1 {
-  color: #fff;
+  color: var(--text-color);
   font-family: "Roboto", sans-serif;
+  transition: color 0.2s;
 }
 
 #container {
@@ -30,14 +43,38 @@ body h1 {
   position: relative;
   margin: 10px 0;
 }
-#container #socials .github {
-  max-height: 100%;
-  position: relative;
+#container #socials .social {
+  background: transparent;
+  outline: none;
+  border: none;
+  cursor: pointer;
+  color: transparent;
+  opacity: 1;
   transition: opacity 0.2s;
+  margin: 0 5px;
 }
-#container #socials .github:hover {
-  opacity: 0.8;
+#container #socials .social:hover {
+  opacity: 0.5;
 }
-#container #socials .github img {
-  height: 40px;
+#container #socials .social::after {
+  display: block;
+  content: "";
+  height: 30px;
+  width: 30px;
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+          mask-position: center;
+  -webkit-mask-size: 25px;
+          mask-size: 25px;
+  background-color: var(--text-color);
+  transition: background-color 0.2s;
+}
+#container #socials #github::after {
+  -webkit-mask-image: url("../Images/github.svg");
+          mask-image: url("../Images/github.svg");
+}
+#container #socials #toggle-theme::after {
+  -webkit-mask-image: var(--toggle-theme-icon);
+          mask-image: var(--toggle-theme-icon);
 }/*# sourceMappingURL=demo.css.map */

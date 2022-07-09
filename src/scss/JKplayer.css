@@ -1,35 +1,50 @@
 @import url("../font/finlandica.css");
+:root #detach-button-host {
+  display: none !important;
+}
 :root #jkplayer-box {
   --controls-font-family: "Finlandica", sans-serif;
   --player-border-radius: 10px;
-  --player-box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.59);
+  --player-box-shadow: 4px 5px 6px -4px #000000;
+  --player-border: none;
   --theme-color: #00b2ff;
   --video-background-color: #000000;
   --captions-background-color: #0000008e;
   --captions-color: #ffffff;
   --captions-font: var(--controls-font-family);
-  --captions-size: 1.8vh;
+  --captions-size: 1.5em;
+  --mobile-captions-size: 1em;
   --controls-buttons-size: 17px;
   --controls-color: #ffffff;
   --remain-time-color: var(--controls-color);
-  --range-height: 7px;
-  --range-background-color: #ffffff50;
   --buffered-background-color: #ffffff8e;
-  --range-thumb-color: #ffffff;
-  --range-thumb-size: 15px;
-  --controls-spacing: 7px;
+  --controls-spacing: 5px;
   --control-box-spacing: 5px 15px 15px 15px;
+  --range-background-color: #ffffff50;
+  --range-thumb-color: #ffffff;
+  --range-height: 7px;
+  --range-thumb-size: 15px;
   --poster-background-color: #000000;
-  --settings-menu-background: #ffffffaf;
+  --settings-menu-background: #ffffffcc;
+  --settings-menu-background-hover: var(--theme-color);
   --settings-menu-color: #313131de;
   --settings-menu-color-hover: #ffffff;
-  --center-play-button-size: 32px;
+  --center-play-button-size: 40px;
   --center-play-icon-size: 18px;
   --center-play-button-color: var(--theme-color);
   --center-play-icon-color: #ffffff;
 }
+:root #jkplayer-error-box {
+  --error-box-font-family: "Finlandica", sans-serif;
+  --error-box-background-color: #000000;
+  --error-box-color: #ffffff;
+  --error-box-font-size: 22px;
+}
 
 #jkplayer-box {
+  box-shadow: var(--player-box-shadow);
+  border-radius: var(--player-border-radius);
+  border: var(--player-border);
   width: 100%;
   position: relative;
   display: flex;
@@ -39,21 +54,42 @@
 #jkplayer-box video {
   width: 100%;
   display: flex;
-  border-radius: var(--player-border-radius);
-  box-shadow: var(--player-box-shadow);
   background-color: var(--video-background-color);
 }
-#jkplayer-box #jkplayer-poster {
+#jkplayer-box #jkplayer-cover {
   position: absolute;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   background-color: var(--poster-background-color);
   border-radius: var(--player-border-radius);
+  cursor: pointer;
+}
+#jkplayer-box #jkplayer-poster #jkplayer-skip-time-left, #jkplayer-box #jkplayer-poster #jkplayer-skip-time-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ffffff;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  pointer-events: none;
+  display: none;
+}
+#jkplayer-box #jkplayer-poster #jkplayer-skip-time-left {
+  left: 50px;
+}
+#jkplayer-box #jkplayer-poster #jkplayer-skip-time-right {
+  right: 50px;
 }
 #jkplayer-box #jkplayer-captions {
   display: none;
@@ -87,11 +123,13 @@
   transform: translate(-50%, -50%);
   border: none;
   background-color: var(--theme-color);
-  border-radius: 5px;
+  border-radius: 100%;
   width: var(--center-play-button-size);
   height: var(--center-play-button-size);
   opacity: 1;
-  transition: 0.2s opacity;
+  transition: 0.2s opacity, 0.2s height, 0.2s width;
+  outline: none;
+  overflow: hidden;
 }
 #jkplayer-box #jkplayer-center-play-button::after, #jkplayer-box #jkplayer-center-replay-button::after {
   content: "";
@@ -99,6 +137,8 @@
           mask-repeat: no-repeat;
   -webkit-mask-size: contain;
           mask-size: contain;
+  -webkit-mask-position: center;
+          mask-position: center;
   background-color: var(--center-play-icon-color);
   width: var(--center-play-icon-size);
   height: var(--center-play-icon-size);
@@ -110,7 +150,6 @@
 #jkplayer-box #jkplayer-center-play-button::after {
   -webkit-mask-image: url("../icons/play.svg");
           mask-image: url("../icons/play.svg");
-  left: 60%;
 }
 #jkplayer-box #jkplayer-center-replay-button {
   display: none;
@@ -153,37 +192,6 @@
 #jkplayer-box #jkplayer-controls .jkplayer-controls-button:hover {
   background: var(--theme-color);
 }
-#jkplayer-box #jkplayer-controls input[type=range] {
-  height: var(--range-height);
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
-  background: transparent;
-  overflow: hidden;
-  border-radius: 7.5px;
-  margin: 0;
-}
-#jkplayer-box #jkplayer-controls input[type=range]::-webkit-slider-runnable-track {
-  -webkit-appearance: none;
-          appearance: none;
-  background: var(--range-background-color);
-  height: var(--range-height);
-  border-radius: calc(var(--range-height) / 2);
-}
-#jkplayer-box #jkplayer-controls input[type=range]:focus {
-  outline: none;
-}
-#jkplayer-box #jkplayer-controls input[type=range]::-webkit-slider-thumb {
-  transform: translateY(-5px);
-  -webkit-appearance: none;
-          appearance: none;
-  width: var(--range-thumb-size);
-  height: var(--range-thumb-size);
-  background: var(--range-thumb-color);
-  border-radius: calc(var(--range-thumb-size) / 2);
-  cursor: pointer;
-  box-shadow: -500px 0 0 500px var(--theme-color);
-}
 #jkplayer-box #jkplayer-controls #jkplayer-play-button {
   -webkit-mask-image: url("../icons/play.svg");
           mask-image: url("../icons/play.svg");
@@ -192,7 +200,6 @@
   flex: 7;
   margin: 0 var(--controls-spacing);
   position: relative;
-  height: calc(var(--range-height) * 3);
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -229,7 +236,6 @@
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box {
   width: 100%;
   height: var(--range-height);
-  overflow: hidden;
   position: absolute;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box .jkplayer-chapter {
@@ -304,11 +310,39 @@
   margin: var(--controls-spacing);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
-  -webkit-mask-image: url("../icons/volume-low.svg");
-          mask-image: url("../icons/volume-low.svg");
+  -webkit-mask-image: url("../icons/volume-max.svg");
+          mask-image: url("../icons/volume-max.svg");
 }
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range {
+  margin: 0 var(--controls-spacing);
   width: 100%;
+  height: var(--range-height);
+  background-color: var(--range-background-color);
+  border-radius: var(--range-height);
+  position: relative;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range #jkplayer-volume-active {
+  position: absolute;
+  background-color: var(--theme-color);
+  border-radius: var(--range-height);
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range #jkplayer-volume-active::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translate(50%, -50%);
+  height: var(--range-thumb-size);
+  width: var(--range-thumb-size);
+  background-color: var(--range-thumb-color);
+  border-radius: var(--range-thumb-size);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-duration-time, #jkplayer-box #jkplayer-controls #jkplayer-current-time {
   color: var(--remain-time-color);
@@ -336,70 +370,143 @@
           mask-image: url("../icons/settings.svg");
 }
 #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
-  position: absolute;
-  right: -10px;
+  max-height: 0;
+  overflow: hidden;
+  visibility: hidden;
   bottom: calc(100% + 10px);
-  border-radius: 5px;
-  padding: 5px;
-  background-color: var(--settings-menu-background);
-  display: none;
-}
-#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu::after {
+  right: -10px;
   position: absolute;
-  bottom: -10px;
-  right: 18px;
-  content: "";
-  width: 0px;
-  height: 0px;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 10px solid var(--settings-menu-background);
-}
-#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option {
-  display: flex;
-  cursor: pointer;
-  padding: 5px;
+  background-color: var(--settings-menu-background);
   border-radius: 5px;
   transition: all 0.2s;
+  min-width: 120px;
+  padding: 0 5px;
+  opacity: 0;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen[hidden] {
+  display: none;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header {
   -webkit-user-select: none;
      -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
-  color: var(--settings-menu-color);
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 5px;
+  padding: 4px 5px;
+  transition: all 0.2s;
+  position: relative;
 }
-#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option::after {
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option:hover, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header:hover {
+  color: var(--settings-menu-color-hover);
+  background-color: var(--settings-menu-background-hover);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option.active, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header.active {
+  font-weight: 500;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option.active::before, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header.active::before {
   content: "";
-  width: 10px;
-  margin-left: 10px;
-  background-color: var(--settings-menu-color);
+  position: absolute;
+  left: 0;
+  top: 0;
   -webkit-mask-size: 50%;
           mask-size: 50%;
-  -webkit-mask-repeat: no-repeat;
-          mask-repeat: no-repeat;
   -webkit-mask-position: center;
           mask-position: center;
+  height: 100%;
+  aspect-ratio: 1;
+  -webkit-mask-image: url("../icons/check.svg");
+          mask-image: url("../icons/check.svg");
+  background-color: var(--settings-menu-color);
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
   transition: all 0.2s;
-  -webkit-mask-image: url("../icons/right.svg");
-          mask-image: url("../icons/right.svg");
 }
-#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option:hover {
-  background-color: var(--theme-color);
-  color: var(--settings-menu-color-hover);
-}
-#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option:hover::after {
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option.active:hover::before, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header.active:hover::before {
   background-color: var(--settings-menu-color-hover);
 }
-#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option .jktech-config-option-name, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option .jktech-config-option-value {
-  width: 80px;
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen.jkplayer-settings-screen-main .jkplayer-settions-option::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  -webkit-mask-size: 20%;
+          mask-size: 20%;
+  -webkit-mask-position: center;
+          mask-position: center;
+  height: 100%;
+  aspect-ratio: 1;
+  -webkit-mask-image: url("../icons/right.svg");
+          mask-image: url("../icons/right.svg");
+  background-color: var(--settings-menu-color);
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  transition: all 0.2s;
 }
-#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jktech-config-option .jktech-config-option-value {
-  text-align: right;
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen.jkplayer-settings-screen-main .jkplayer-settions-option:hover::after {
+  background-color: var(--settings-menu-color-hover);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option {
+  padding-left: 25px;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header {
+  position: relative;
+  font-weight: 600;
+  margin-bottom: 5px;
+  padding-left: 25px;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  -webkit-mask-size: 20%;
+          mask-size: 20%;
+  -webkit-mask-position: center;
+          mask-position: center;
+  height: 100%;
+  aspect-ratio: 1;
+  -webkit-mask-image: url("../icons/left.svg");
+          mask-image: url("../icons/left.svg");
+  background-color: var(--settings-menu-color);
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  transition: all 0.2s;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header:hover::before {
+  background-color: var(--settings-menu-color-hover);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header::after {
+  content: "";
+  position: absolute;
+  background-color: var(--settings-menu-color);
+  transform: translateX(-50%);
+  opacity: 0.5;
+  bottom: -3px;
+  left: 50%;
+  height: 1px;
+  width: 95%;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu::after {
+  position: absolute;
+  bottom: -5px;
+  right: 20px;
+  content: "";
+  width: 0px;
+  height: 0px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--settings-menu-background);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-pip-button {
   -webkit-mask-image: url("../icons/pip.svg");
           mask-image: url("../icons/pip.svg");
 }
 #jkplayer-box #jkplayer-controls #jkplayer-fullscreen-button {
+  border-radius: 3px;
+  -webkit-mask-size: var(--controls-buttons-size);
+          mask-size: var(--controls-buttons-size);
   -webkit-mask-image: url("../icons/expand.svg");
           mask-image: url("../icons/expand.svg");
 }
@@ -411,6 +518,8 @@
           mask-image: url("../icons/compress.svg");
 }
 #jkplayer-box.jkplayer-playing #jkplayer-center-play-button {
+  width: 0;
+  height: 0;
   opacity: 0;
 }
 #jkplayer-box.jkplayer-playing #jkplayer-controls #jkplayer-play-button {
@@ -444,13 +553,15 @@
 #jkplayer-box.jkplayer-paused.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu, #jkplayer-box.jkplayer-pip.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
   display: block !important;
 }
-#jkplayer-box.jkplayer-volume-muted #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
+#jkplayer-box.jkplayer-paused.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button, #jkplayer-box.jkplayer-pip.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button {
+  background-color: var(--theme-color);
+}
+#jkplayer-box.jkplayer-muted #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
   -webkit-mask-image: url("../icons/volume-muted.svg");
           mask-image: url("../icons/volume-muted.svg");
 }
-#jkplayer-box.jkplayer-volume-max #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
-  -webkit-mask-image: url("../icons/volume-max.svg");
-          mask-image: url("../icons/volume-max.svg");
+#jkplayer-box.jkplayer-hidden-controls {
+  cursor: none;
 }
 #jkplayer-box.jkplayer-hidden-controls #jkplayer-controls {
   bottom: -51px;
@@ -468,11 +579,57 @@
   transform: rotate(90deg);
 }
 #jkplayer-box.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
-  display: block;
+  visibility: visible;
+  overflow: inherit;
+  max-height: 400px;
+  padding: 5px;
+  opacity: 1;
+}
+#jkplayer-box.jkplayer-loading #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box .jkplayer-chapter {
+  -webkit-animation: jkplayer-loading-progress 1s linear infinite;
+          animation: jkplayer-loading-progress 1s linear infinite;
+  background-image: linear-gradient(-45deg, rgba(35, 40, 47, 0.6) 25%, transparent 0, transparent 50%, rgba(35, 40, 47, 0.6) 0, rgba(35, 40, 47, 0.6) 75%, transparent 0, transparent);
+  background-repeat: repeat-x;
+  background-size: 25px 25px;
+}
+#jkplayer-box.jkplayer-mobile #jkplayer-captions {
+  font-size: var(--mobile-captions-size);
 }
 
+#jkplayer-error-box {
+  width: 100%;
+  aspect-ratio: 16/9;
+  font-family: var(--error-box-font-family);
+  color: var(--error-box-color);
+  background-color: var(--error-box-background-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--error-box-font-size);
+}
+#jkplayer-error-box::before {
+  content: "(._. )( ._.)";
+  margin: 40px 0;
+  font-size: calc(var(--error-box-font-size) * 2);
+}
+
+@-webkit-keyframes jkplayer-loading-progress {
+  to {
+    background-position: 25px 0;
+  }
+}
+
+@keyframes jkplayer-loading-progress {
+  to {
+    background-position: 25px 0;
+  }
+}
 @media screen and (max-width: 500px) {
   #jkplayer-box #jkplayer-duration-time {
+    display: none;
+  }
+  #jkplayer-box #jkplayer-controls #jkplayer-subtitles-button {
     display: none;
   }
   #jkplayer-box #jkplayer-controls #jkplayer-volume-box {
