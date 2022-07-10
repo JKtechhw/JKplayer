@@ -24,7 +24,8 @@
   --range-height: 7px;
   --range-thumb-color: #ffffff;
   --range-thumb-size: 14px;
-  --range-thumb-border-color: rgba(255, 255, 255, 0.2);
+  --range-thumb-border-color: rgba(255, 255, 255, 0.5);
+  --range-thumb-border-size: 3px;
   --poster-background-color: #000000;
   --settings-menu-background: #ffffffcc;
   --settings-menu-background-hover: var(--theme-color);
@@ -40,6 +41,7 @@
   --error-box-background-color: #000000;
   --error-box-color: #ffffff;
   --error-box-font-size: 22px;
+  --error-box-sad-face: "(._. )( ._.)";
 }
 
 #jkplayer-box {
@@ -57,7 +59,7 @@
   display: flex;
   background-color: var(--video-background-color);
 }
-#jkplayer-box #jkplayer-cover {
+#jkplayer-box #jkplayer-poster {
   position: absolute;
   background-position: center;
   background-size: cover;
@@ -74,10 +76,13 @@
   border-radius: var(--player-border-radius);
   cursor: pointer;
 }
-#jkplayer-box #jkplayer-poster #jkplayer-skip-time-left, #jkplayer-box #jkplayer-poster #jkplayer-skip-time-right {
+#jkplayer-box #jkplayer-cover #jkplayer-skip-time-left, #jkplayer-box #jkplayer-cover #jkplayer-skip-time-right {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  padding: 5px 8px;
   color: #ffffff;
   -webkit-user-select: none;
      -moz-user-select: none;
@@ -86,10 +91,10 @@
   pointer-events: none;
   display: none;
 }
-#jkplayer-box #jkplayer-poster #jkplayer-skip-time-left {
+#jkplayer-box #jkplayer-cover #jkplayer-skip-time-left {
   left: 50px;
 }
-#jkplayer-box #jkplayer-poster #jkplayer-skip-time-right {
+#jkplayer-box #jkplayer-cover #jkplayer-skip-time-right {
   right: 50px;
 }
 #jkplayer-box #jkplayer-captions {
@@ -260,6 +265,10 @@
   transform: translate(1.5px, -50%) scaleY(1.5);
   opacity: 1;
 }
+#jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box:active + #jkplayer-timeline-range #jkplayer-timeline-range-current::before {
+  border: var(--range-thumb-border-size) solid var(--range-thumb-border-color);
+  background-clip: padding-box;
+}
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb {
   position: absolute;
   left: 0;
@@ -330,7 +339,7 @@
           user-select: none;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range:active #jkplayer-volume-active::after {
-  border: 2px solid var(--range-thumb-border-color);
+  border: var(--range-thumb-border-size) solid var(--range-thumb-border-color);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range #jkplayer-volume-active {
   position: absolute;
@@ -350,6 +359,7 @@
   width: var(--range-thumb-size);
   background-color: var(--range-thumb-color);
   border-radius: var(--range-thumb-size);
+  background-clip: padding-box;
   transition: border 0.2s;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-duration-time, #jkplayer-box #jkplayer-controls #jkplayer-current-time {
@@ -406,9 +416,29 @@
   transition: all 0.2s;
   position: relative;
 }
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option .jkplayer-settings-name, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header .jkplayer-settings-name {
+  transition: 0.2s color;
+  width: 75px;
+  display: inline-block;
+  text-align: left;
+  font-weight: 500;
+  color: var(--settings-menu-color);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option .jkplayer-settings-active-value, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header .jkplayer-settings-active-value {
+  transition: 0.2s color;
+  text-align: right;
+  width: 50px;
+  opacity: 0.7;
+  display: inline-block;
+  padding-right: 27px;
+  color: var(--settings-menu-color);
+}
 #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option:hover, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header:hover {
-  color: var(--settings-menu-color-hover);
   background-color: var(--settings-menu-background-hover);
+  color: var(--settings-menu-color-hover);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option:hover .jkplayer-settings-name, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option:hover .jkplayer-settings-active-value, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header:hover .jkplayer-settings-name, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header:hover .jkplayer-settings-active-value {
+  color: var(--settings-menu-color-hover);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option.active, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header.active {
   font-weight: 500;
@@ -433,6 +463,9 @@
 }
 #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settions-option.active:hover::before, #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen .jkplayer-settings-screen-header.active:hover::before {
   background-color: var(--settings-menu-color-hover);
+}
+#jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen.jkplayer-settings-screen-main .jkplayer-settions-option {
+  padding-left: 10px;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu .jkplayer-settings-screen.jkplayer-settings-screen-main .jkplayer-settions-option::after {
   content: "";
@@ -610,6 +643,7 @@
   font-family: var(--error-box-font-family);
   color: var(--error-box-color);
   background-color: var(--error-box-background-color);
+  border-radius: var(--player-border-radius);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -617,7 +651,7 @@
   font-size: var(--error-box-font-size);
 }
 #jkplayer-error-box::before {
-  content: "(._. )( ._.)";
+  content: var(--error-box-sad-face);
   margin: 40px 0;
   font-size: calc(var(--error-box-font-size) * 2);
 }

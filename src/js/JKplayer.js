@@ -7,18 +7,18 @@ class JKplayer {
         this.playerSettings = settings;
         if(this.targetVideoNode) {
             if(this.targetVideoNode.nodeName.toLowerCase() === "video") {
+                this.translateObject = {
+                    download: "Stáhnout",
+                    quality: "Kvalita",
+                    captions: "Titulky",
+                    disabled: "Vypnuto",
+                    speed: "Rychlost",
+                    auto: "Auto",
+                    cantPlayVideo: "Video nelze přehrát"
+                }
+
                 if(this.checkMediaStatus()) {
                     this.videoData = videoData;
-
-                    this.translateObject = {
-                        download: "Stáhnout",
-                        quality: "Kvalita",
-                        captions: "Titulky",
-                        disabled: "Vypnuto",
-                        speed: "Rychlost",
-                        auto: "Auto",
-                        cantPlayVideo: "Video nelze přehrát"
-                    }
 
                     this.preloadIcons("/src/icons/");
                     this.buildVideoBox();
@@ -35,8 +35,8 @@ class JKplayer {
                     }
 
                     this.setKeys();
-                    this.generateTimelineThumbPreview();
                     this.loadLocalStorage();
+                    this.generateTimelineThumbPreview();
                     this.clean();
                 }
             }
@@ -81,17 +81,26 @@ class JKplayer {
     }
 
     errorScreen(message) {
+        localStorage.removeItem("jkplayer")
         let errorBox = document.createElement("div");
         errorBox.id = "jkplayer-error-box";
         errorBox.innerText = message;
-        this.targetVideoNode.replaceWith(errorBox);
+        if(this.targetVideoNode) {
+            this.targetVideoNode.replaceWith(errorBox);
+        }
+
+        else {
+            this.videoBox.replaceWith(errorBox);
+        }
     }
 
     loadLocalStorage() {
         let settings = JSON.parse(localStorage.getItem("jkplayer"));
         if(settings) {
             settings.volume ? this.videoElement.volume = settings.volume : this.videoElement.volume = this.playerSettings.volume || 1;
+            this.volumeActive.style.width = Number(this.videoElement.volume) * 100 + "%";
             settings.muted ? this.videoElement.muted = true : this.videoElement.muted = false;
+            if(this.videoElement.muted) this.videoBox.classList.add("jkplayer-muted");
             settings.speed ? this.videoElement.playbackRate = settings.speed : this.videoElement.playbackRate = 1;
             settings.captions ? this.toggleCaptions(settings.captions) : null;
             settings.quality ? this.changeVideoSource(settings.quality) : null;
@@ -157,7 +166,7 @@ class JKplayer {
         //Create poster box
         if(this.targetVideoNode.poster) {
             this.posterBox = document.createElement("div");
-            this.posterBox.id = "jkplayer-cover";
+            this.posterBox.id = "jkplayer-poster";
             this.posterBox.style.backgroundImage = `url(${this.targetVideoNode.poster})`;
             this.targetVideoNode.removeAttribute("poster");
             this.videoBox.appendChild(this.posterBox);
@@ -165,7 +174,7 @@ class JKplayer {
 
         //Skiptime box
         this.displayMessaagesBox = document.createElement("div");
-        this.displayMessaagesBox.id = "jkplayer-poster";
+        this.displayMessaagesBox.id = "jkplayer-cover";
         this.videoBox.appendChild(this.displayMessaagesBox);
 
         this.skipTimeLeft = document.createElement("div");
@@ -197,8 +206,9 @@ class JKplayer {
         this.videoBox.appendChild(this.centerReplayButton);
 
         this.videoElement = this.videoBox.querySelector("video");
-        this.videoElement.addEventListener("error", () => {
-            console.error("Errror more")
+        this.videoElement.addEventListener("error", (e) => {
+            console.error(e);
+            this.errorScreen("Nastal error voe")
         });
         this.targetVideoNode.replaceWith(this.videoBox);
     }
@@ -316,10 +326,11 @@ class JKplayer {
     buildSettingsBox() {
         //TODO load data from config
         let options = [];
+        let storageSettings = localStorage.getItem("jkplayer") ? JSON.parse(localStorage.getItem("jkplayer")) : {};
 
         if(this.targetVideoNode.textTracks.length > 0) {
             let captionsOption = {
-                name: this.translateObject.captions, active: this.translateObject.disabled, value: [{name: "Vypnuto", value: ""}]
+                name: this.translateObject.captions, active: storageSettings.captions || this.translateObject.disabled, value: [{name: this.translateObject.disabled, value: this.translateObject.disabled}]
             }
 
             for(let i = 0; i < this.targetVideoNode.textTracks.length; i++) {
@@ -334,19 +345,19 @@ class JKplayer {
 
         if(videoSources.length > 1) {
             let qualityOptions = {
-                name: this.translateObject.quality, active: this.translateObject.auto, value: [{name: this.translateObject.auto, value: this.translateObject.auto}]
+                name: this.translateObject.quality, active: storageSettings.quality || this.translateObject.auto, value: [{name: this.translateObject.auto, value: this.translateObject.auto}]
             }
 
             for(let i = 0; i < videoSources.length; i++) {
-                let option = { name: videoSources[i].getAttribute("size"), value: videoSources[i].getAttribute("size")}
+                let option = { name: videoSources[i].getAttribute("size") + "p", value: videoSources[i].getAttribute("size")}
                 qualityOptions.value.push(option);
             }
 
             options.push(qualityOptions);
         }
 
-        let speedOptions =  this.playerSettings.speedOptions ||  ["0.25","0.50","0.75","1","1.25","1.50","1.75", "2"];
-        let videoSpeed = { name: this.translateObject.speed, active: "1", value: []};
+        let speedOptions =  this.playerSettings.speedOptions ||  [0.25, 0.50, 0.75, 1, 1.25, 1.5, 1.75, 2, 4];
+        let videoSpeed = { name: this.translateObject.speed, active: storageSettings.speed || 1, value: []};
 
         speedOptions.forEach(time => {
             let option = {name: time + "×", value: time}
@@ -362,7 +373,16 @@ class JKplayer {
         options.forEach(option => {
             let optionElement = document.createElement("div");
             optionElement.classList.add("jkplayer-settions-option");
-            optionElement.innerText = option.name;
+            let optionName = document.createElement("span");
+            optionName.classList.add("jkplayer-settings-name");
+            optionName.innerText = option.name;
+            optionElement.appendChild(optionName);
+
+            let optionValue = document.createElement("span");
+            optionValue.classList.add("jkplayer-settings-active-value");
+            optionValue.innerHTML  = option.active;
+            optionElement.appendChild(optionValue);
+
             mainScreen.appendChild(optionElement);
 
             let optionScreen = document.createElement("div");
@@ -406,7 +426,7 @@ class JKplayer {
                 }
 
                 optionElement.onclick = (e) => {
-                    e.target.parentElement.querySelector(".active").classList.remove("active");
+                    if (e.target.parentElement.querySelector(".active")) e.target.parentElement.querySelector(".active").classList.remove("active");
                     e.target.classList.add("active");
                     this.videoBox.classList.remove("jkplayer-open-settings");
                 }
@@ -418,7 +438,7 @@ class JKplayer {
         });
     }
 
-    addChapters(chapters) {
+    buildChapters(chapters) {
         if(this.timelistChaptersBox.querySelector(".jkplayer-chapter")) {
             return;
         }
@@ -433,16 +453,24 @@ class JKplayer {
                 if(chapterData.time <= this.videoDuration && chapterData.time >= 0) {
                     let chapter = document.createElement("div");
                     chapter.classList.add("jkplayer-chapter");
-                    chapter.style.left = (chapterData.time / videoDuration) + "%";
-                    chapter.style.backgroundColor = chapterData.color;
                     let endTime = chapters[index + 1] ? this.secondsFromTime(chapters[index + 1].time) : this.videoDuration;
-                    chapter.style.width = `calc(${this.widthFromTime(endTime - chapterData.time)}% - 3px)`;
+                    if(endTime > this.videoDuration) {
+                        console.warn("Cropping chapter, end time is out of range");
+                        endTime = this.videoDuration;
+                    }
+
+                    let width = this.widthFromTime(endTime - chapterData.time);
+                    let left = (chapterData.time / videoDuration);
+
+                    chapter.style.width = `calc(${width}% - 3px)`;
+                    chapter.style.left = left + "%";
+                    chapter.style.backgroundColor = chapterData.color;
                     chapter.dataset.name = chapterData.name || "";
                     this.timelistChaptersBox.appendChild(chapter);
                 }
 
                 else {
-                    console.warn("Time chapter is out of range");
+                    console.warn("Chapter is out of range");
                 }
             });
         }
@@ -521,7 +549,7 @@ class JKplayer {
 
         //Volume
         this.videoElement.addEventListener("volumechange", () => {
-            this.updateStorage("volume", this.videoElement.volume);
+            this.updateStorage("volume", this.videoElement.volume.toFixed(2));
             if(this.videoElement.volume === 0 || this.videoElement.muted) {
                 this.videoBox.classList.add("jkplayer-muted");
             }
@@ -759,7 +787,7 @@ class JKplayer {
         this.videoDuration = this.videoElement.duration;
         this.videoLengthSpan.innerText = this.timeFromSeconds(this.videoDuration);
         this.currentTime.innerText = this.timeFromSeconds(this.videoElement.currentTime);
-        this.addChapters(this.videoData.chapters);
+        this.buildChapters(this.videoData.chapters);
         
         let gcd = function gcd (a, b) {
             return (b == 0) ? a : gcd (b, a%b);
@@ -804,11 +832,12 @@ class JKplayer {
         var horizontalItemCount = 5;
         var verticalItemCount = 5;
 
-        let preview_video = document.createElement('video')
+        let preview_video = document.createElement('video');
         preview_video.preload = "metadata";
         preview_video.width = "500";
         preview_video.height = "300"
         preview_video.controls = true;
+
         preview_video.src = this.targetVideoNode.currentSrc;
         preview_video.addEventListener("loadeddata", async () => {
             preview_video.pause();
@@ -953,15 +982,16 @@ class JKplayer {
     }
 
     changeVolume(direction = "+") {
+        this.videoElement.muted = false;
         if(direction === "+") {
-            if(this.videoElement.volume <= 0.9) {
-                this.videoElement.volume += 0.1;
+            if(this.videoElement.volume <= 0.95) {
+                this.videoElement.volume = Number(this.videoElement.volume.toFixed(2)) + Number(0.05);
             }
         }
 
         else {
-            if(this.videoElement.volume >= 0.1) {
-                this.videoElement.volume -= 0.1;
+            if(this.videoElement.volume >= 0.05) {
+                this.videoElement.volume = Number(this.videoElement.volume.toFixed(2)) - Number(0.05);
             }
         }
     }
@@ -1061,7 +1091,7 @@ class JKplayer {
             }
         }
 
-        if(lang) {
+        if(lang !== this.translateObject.disabled) {
             let id = -1;
             for (let i = 0; i < this.videoElement.textTracks.length; i++) {
                 if(this.videoElement.textTracks[i].language === lang) {
