@@ -24,8 +24,6 @@
   --range-height: 7px;
   --range-thumb-color: #ffffff;
   --range-thumb-size: 14px;
-  --range-thumb-border-color: rgba(255, 255, 255, 0.5);
-  --range-thumb-border-size: 3px;
   --poster-background-color: #000000;
   --settings-menu-background: #ffffffcc;
   --settings-menu-background-hover: var(--theme-color);
@@ -35,6 +33,8 @@
   --center-play-icon-size: 18px;
   --center-play-button-color: var(--theme-color);
   --center-play-icon-color: #ffffff;
+  --tooltip-color: var(--settings-menu-color);
+  --tooltip-background: var(--settings-menu-background) ;
 }
 :root #jkplayer-error-box {
   --error-box-font-family: "Finlandica", sans-serif;
@@ -76,27 +76,6 @@
   border-radius: var(--player-border-radius);
   cursor: pointer;
 }
-#jkplayer-box #jkplayer-cover #jkplayer-skip-time-left, #jkplayer-box #jkplayer-cover #jkplayer-skip-time-right {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 5px;
-  padding: 5px 8px;
-  color: #ffffff;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-      -ms-user-select: none;
-          user-select: none;
-  pointer-events: none;
-  display: none;
-}
-#jkplayer-box #jkplayer-cover #jkplayer-skip-time-left {
-  left: 50px;
-}
-#jkplayer-box #jkplayer-cover #jkplayer-skip-time-right {
-  right: 50px;
-}
 #jkplayer-box #jkplayer-captions {
   display: none;
   position: absolute;
@@ -112,6 +91,7 @@
   box-sizing: border-box;
   border-radius: 3px;
   transition: bottom 0.2s;
+  transition-delay: 0.2s;
   -webkit-user-select: none;
      -moz-user-select: none;
       -ms-user-select: none;
@@ -135,9 +115,11 @@
   opacity: 1;
   transition: 0.2s opacity, 0.2s height, 0.2s width, 0.2s border-radius ease-in-out;
   outline: none;
+  opacity: 0.8;
   overflow: hidden;
 }
 #jkplayer-box #jkplayer-center-play-button:hover, #jkplayer-box #jkplayer-center-replay-button:hover {
+  opacity: 1;
   border-radius: 5px;
 }
 #jkplayer-box #jkplayer-center-play-button::after, #jkplayer-box #jkplayer-center-replay-button::after {
@@ -180,6 +162,7 @@
   align-items: center;
   z-index: 2;
   transition: 0.2s bottom;
+  transition-delay: 0.2s;
 }
 #jkplayer-box #jkplayer-controls .jkplayer-controls-button {
   border: none;
@@ -338,9 +321,6 @@
       -ms-user-select: none;
           user-select: none;
 }
-#jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range:active #jkplayer-volume-active::after {
-  border: var(--range-thumb-border-size) solid var(--range-thumb-border-color);
-}
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-range #jkplayer-volume-active {
   position: absolute;
   background-color: var(--theme-color);
@@ -360,6 +340,7 @@
   background-color: var(--range-thumb-color);
   border-radius: var(--range-thumb-size);
   background-clip: padding-box;
+  box-sizing: border-box;
   transition: border 0.2s;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-duration-time, #jkplayer-box #jkplayer-controls #jkplayer-current-time {
@@ -551,6 +532,45 @@
   -webkit-mask-image: url("../icons/expand.svg");
           mask-image: url("../icons/expand.svg");
 }
+#jkplayer-box #jkplayer-controls [data-tooltip] {
+  position: relative;
+}
+#jkplayer-box #jkplayer-controls [data-tooltip]:hover::before, #jkplayer-box #jkplayer-controls [data-tooltip]:hover::after {
+  visibility: visible;
+  opacity: 1;
+}
+#jkplayer-box #jkplayer-controls [data-tooltip]::before {
+  z-index: 1;
+  transition: opacity 0.2s;
+  content: "";
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  bottom: calc(100% + 3px);
+  visibility: hidden;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--tooltip-background);
+}
+#jkplayer-box #jkplayer-controls [data-tooltip]::after {
+  z-index: 1;
+  transition: all 0.2s;
+  white-space: nowrap;
+  color: var(--tooltip-color);
+  background-color: var(--tooltip-background);
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  padding: 5px 8px;
+  border-radius: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  visibility: hidden;
+  opacity: 0;
+}
 #jkplayer-box.jkplayer-fullscreen video {
   border-radius: 0;
 }
@@ -585,16 +605,16 @@
 #jkplayer-box.jkplayer-subtitles-enabled #jkplayer-captions {
   display: block;
 }
-#jkplayer-box.jkplayer-paused #jkplayer-controls, #jkplayer-box.jkplayer-pip #jkplayer-controls {
+#jkplayer-box.jkplayer-paused #jkplayer-controls, #jkplayer-box.jkplayer-pip #jkplayer-controls, #jkplayer-box.jkplayer-loading #jkplayer-controls {
   bottom: 0 !important;
 }
-#jkplayer-box.jkplayer-paused #jkplayer-captions, #jkplayer-box.jkplayer-pip #jkplayer-captions {
+#jkplayer-box.jkplayer-paused #jkplayer-captions, #jkplayer-box.jkplayer-pip #jkplayer-captions, #jkplayer-box.jkplayer-loading #jkplayer-captions {
   bottom: 50px !important;
 }
-#jkplayer-box.jkplayer-paused.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu, #jkplayer-box.jkplayer-pip.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
+#jkplayer-box.jkplayer-paused.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu, #jkplayer-box.jkplayer-pip.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu, #jkplayer-box.jkplayer-loading.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-menu {
   display: block !important;
 }
-#jkplayer-box.jkplayer-paused.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button, #jkplayer-box.jkplayer-pip.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button {
+#jkplayer-box.jkplayer-paused.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button, #jkplayer-box.jkplayer-pip.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button, #jkplayer-box.jkplayer-loading.jkplayer-open-settings #jkplayer-controls #jkplayer-settings-box #jkplayer-settings-button {
   background-color: var(--theme-color);
 }
 #jkplayer-box.jkplayer-muted #jkplayer-controls #jkplayer-volume-box #jkplayer-volume-button {
