@@ -26,7 +26,7 @@
         --controls-buttons-size: 17px;
         --controls-color: #ffffff;
         --remain-time-color: var(--controls-color);
-        --buffered-background-color: #ffffff8e;
+        --buffered-background-color: #ffffff60;
         --controls-spacing: 5px;
         --control-box-spacing: 5px 15px 15px 15px;
 
@@ -75,7 +75,11 @@
     overflow: hidden;
     outline: none;
 
-    video {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    #jkplayer-video {
         width: 100%;
         display: flex;
         background-color: var(--video-background-color);
@@ -101,6 +105,7 @@
         position: absolute;
         left: 50%;
         bottom: 50px;
+        max-width: 95%;
         transform: translateX(-50%);
         text-align: center;
         font-family: var(--captions-font);
@@ -185,6 +190,10 @@
         transition: 0.2s bottom;
         transition-delay: 0.2s;
 
+        label {
+            margin: 0 var(--controls-spacing);
+        }
+
         .jkplayer-controls-button {
             border: none;
             background: transparent;
@@ -195,7 +204,6 @@
             mask-position: center;
             mask-size: contain;
             cursor: pointer;
-            margin: 0 var(--controls-spacing);
             border-radius: 5px;
             transition: background 0.1s;
 
@@ -221,8 +229,11 @@
                 position: absolute;
 
                 #jkplayer-timeline-range-current, #jkplayer-timeline-buffered {
+                    user-select: none;
+                    pointer-events: none;
                     border-radius: 5px;
                     position: absolute;
+                    height: var(--range-height);
                     width: 0;
                     left: 0;
                     top: 50%;
@@ -241,6 +252,7 @@
                         background-color: var(--range-thumb-color);
                         border-radius: 50%;
                         top: 50%;
+                        pointer-events: none;
                         transform: translateY(-50%);
                     }
                 }
@@ -258,17 +270,16 @@
                 .jkplayer-chapter {
                     position: absolute;
                     top: 50%;
-                    transform: translate(1.5px, -50%) scaleY(1);
+                    transform: translate(1.5px, -50%);
                     height: var(--range-height);
                     border-radius: var(--range-height);
                     background-color: var(--range-background-color);
-                    opacity: 0.5;
-                    transition: all 0.1s;
+                    transition: height 0.15s, border-radius 0.15s;
                     user-select: none;
 
                     &:hover {
-                        transform: translate(1.5px, -50%) scaleY(1.5);
-                        opacity: 1;
+                        height: calc(var(--range-height) * 1.5);
+                        border-radius: calc(var(--range-height) * 2);
                     }
                 }
 
@@ -571,51 +582,6 @@
             mask-size: var(--controls-buttons-size);
             mask-image: url("../icons/expand.svg");
         }
-
-        [data-tooltip] {
-            position: relative;
-
-            &:hover {
-                &::before, &::after {
-                    visibility: visible;
-                    opacity: 1;
-                }
-            }
-            
-            &::before {
-                z-index: 1;
-                transition: opacity 0.2s;
-                content: "";
-                left: 50%;
-                position: absolute;
-                transform: translateX(-50%);
-                bottom: calc(100% + 3px);
-                visibility: hidden;
-                opacity: 0;
-                width: 0;
-                height: 0;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 7px solid var(--tooltip-background);
-            }
-
-            &::after {
-                z-index: 1;
-                transition: all 0.2s;
-                white-space: nowrap;
-                color: var(--tooltip-color);
-                background-color: var(--tooltip-background);
-                content: attr(data-tooltip);
-                position: absolute;
-                bottom: calc(100% + 10px);
-                padding: 5px 8px;
-                border-radius: 5px;
-                left: 50%;
-                transform: translateX(-50%);
-                visibility: hidden;
-                opacity: 0;
-            }
-        }
     }
 
     &.jkplayer-fullscreen {
@@ -760,6 +726,71 @@
     &.jkplayer-mobile {
         #jkplayer-captions {
             font-size: var(--mobile-captions-size);
+        }
+    }
+
+    &:not(&.jkplayer-mobile) {
+        [data-tooltip] {
+            position: relative;
+
+            &:hover {
+                &::before, &::after {
+                    visibility: visible;
+                    opacity: 1;
+                }
+            }
+
+            &[data-tooltip-position="right"] {
+                &::after {
+                    transform: translateX(0);
+                    left: inherit;
+                    right: -5px;
+                }
+            }
+
+            &[data-tooltip-position="left"] {
+                &::after {
+                    transform: translateX(0);
+                    left: -5px;
+                }
+            }
+
+            &::before, &::after {
+                pointer-events: none;
+                user-select: none;
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            
+            &::before {
+                z-index: 1;
+                transition: opacity 0.2s;
+                content: "";
+                bottom: calc(100% + 3px);
+                visibility: hidden;
+                opacity: 0;
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 7px solid var(--tooltip-background);
+            }
+
+            &::after {
+                z-index: 1;
+                transition: all 0.2s;
+                white-space: nowrap;
+                color: var(--tooltip-color);
+                background-color: var(--tooltip-background);
+                content: attr(data-tooltip);
+                bottom: calc(100% + 10px);
+                padding: 5px 8px;
+                border-radius: 5px;
+                left: 50%;
+                visibility: hidden;
+                opacity: 0;
+            }
         }
     }
 }

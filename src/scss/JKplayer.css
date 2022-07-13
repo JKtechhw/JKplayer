@@ -17,7 +17,7 @@
   --controls-buttons-size: 17px;
   --controls-color: #ffffff;
   --remain-time-color: var(--controls-color);
-  --buffered-background-color: #ffffff8e;
+  --buffered-background-color: #ffffff60;
   --controls-spacing: 5px;
   --control-box-spacing: 5px 15px 15px 15px;
   --range-background-color: #ffffff50;
@@ -54,7 +54,10 @@
   overflow: hidden;
   outline: none;
 }
-#jkplayer-box video {
+#jkplayer-box * {
+  -webkit-tap-highlight-color: transparent;
+}
+#jkplayer-box #jkplayer-video {
   width: 100%;
   display: flex;
   background-color: var(--video-background-color);
@@ -81,6 +84,7 @@
   position: absolute;
   left: 50%;
   bottom: 50px;
+  max-width: 95%;
   transform: translateX(-50%);
   text-align: center;
   font-family: var(--captions-font);
@@ -164,6 +168,9 @@
   transition: 0.2s bottom;
   transition-delay: 0.2s;
 }
+#jkplayer-box #jkplayer-controls label {
+  margin: 0 var(--controls-spacing);
+}
 #jkplayer-box #jkplayer-controls .jkplayer-controls-button {
   border: none;
   background: transparent;
@@ -177,7 +184,6 @@
   -webkit-mask-size: contain;
           mask-size: contain;
   cursor: pointer;
-  margin: 0 var(--controls-spacing);
   border-radius: 5px;
   transition: background 0.1s;
 }
@@ -201,8 +207,14 @@
   position: absolute;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-range #jkplayer-timeline-range-current, #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-range #jkplayer-timeline-buffered {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  pointer-events: none;
   border-radius: 5px;
   position: absolute;
+  height: var(--range-height);
   width: 0;
   left: 0;
   top: 50%;
@@ -220,6 +232,7 @@
   background-color: var(--range-thumb-color);
   border-radius: 50%;
   top: 50%;
+  pointer-events: none;
   transform: translateY(-50%);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-range #jkplayer-timeline-buffered {
@@ -233,20 +246,19 @@
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box .jkplayer-chapter {
   position: absolute;
   top: 50%;
-  transform: translate(1.5px, -50%) scaleY(1);
+  transform: translate(1.5px, -50%);
   height: var(--range-height);
   border-radius: var(--range-height);
   background-color: var(--range-background-color);
-  opacity: 0.5;
-  transition: all 0.1s;
+  transition: height 0.15s, border-radius 0.15s;
   -webkit-user-select: none;
      -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box .jkplayer-chapter:hover {
-  transform: translate(1.5px, -50%) scaleY(1.5);
-  opacity: 1;
+  height: calc(var(--range-height) * 1.5);
+  border-radius: calc(var(--range-height) * 2);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box:active + #jkplayer-timeline-range #jkplayer-timeline-range-current::before {
   border: var(--range-thumb-border-size) solid var(--range-thumb-border-color);
@@ -532,45 +544,6 @@
   -webkit-mask-image: url("../icons/expand.svg");
           mask-image: url("../icons/expand.svg");
 }
-#jkplayer-box #jkplayer-controls [data-tooltip] {
-  position: relative;
-}
-#jkplayer-box #jkplayer-controls [data-tooltip]:hover::before, #jkplayer-box #jkplayer-controls [data-tooltip]:hover::after {
-  visibility: visible;
-  opacity: 1;
-}
-#jkplayer-box #jkplayer-controls [data-tooltip]::before {
-  z-index: 1;
-  transition: opacity 0.2s;
-  content: "";
-  left: 50%;
-  position: absolute;
-  transform: translateX(-50%);
-  bottom: calc(100% + 3px);
-  visibility: hidden;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 7px solid var(--tooltip-background);
-}
-#jkplayer-box #jkplayer-controls [data-tooltip]::after {
-  z-index: 1;
-  transition: all 0.2s;
-  white-space: nowrap;
-  color: var(--tooltip-color);
-  background-color: var(--tooltip-background);
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 10px);
-  padding: 5px 8px;
-  border-radius: 5px;
-  left: 50%;
-  transform: translateX(-50%);
-  visibility: hidden;
-  opacity: 0;
-}
 #jkplayer-box.jkplayer-fullscreen video {
   border-radius: 0;
 }
@@ -655,6 +628,59 @@
 }
 #jkplayer-box.jkplayer-mobile #jkplayer-captions {
   font-size: var(--mobile-captions-size);
+}
+#jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip] {
+  position: relative;
+}
+#jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip]:hover::before, #jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip]:hover::after {
+  visibility: visible;
+  opacity: 1;
+}
+#jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip][data-tooltip-position=right]::after {
+  transform: translateX(0);
+  left: inherit;
+  right: -5px;
+}
+#jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip][data-tooltip-position=left]::after {
+  transform: translateX(0);
+  left: -5px;
+}
+#jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip]::before, #jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip]::after {
+  pointer-events: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+#jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip]::before {
+  z-index: 1;
+  transition: opacity 0.2s;
+  content: "";
+  bottom: calc(100% + 3px);
+  visibility: hidden;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--tooltip-background);
+}
+#jkplayer-box:not(#jkplayer-box.jkplayer-mobile) [data-tooltip]::after {
+  z-index: 1;
+  transition: all 0.2s;
+  white-space: nowrap;
+  color: var(--tooltip-color);
+  background-color: var(--tooltip-background);
+  content: attr(data-tooltip);
+  bottom: calc(100% + 10px);
+  padding: 5px 8px;
+  border-radius: 5px;
+  left: 50%;
+  visibility: hidden;
+  opacity: 0;
 }
 
 #jkplayer-error-box {
