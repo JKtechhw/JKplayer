@@ -24,6 +24,10 @@
   --range-height: 7px;
   --range-thumb-color: #ffffff;
   --range-thumb-size: 14px;
+  --timeline-thumb-background: #ffffff;
+  --timeline-thumb-time-color: #000000;
+  --timeline-thumb-chapter-name-color: #ffffff;
+  --timeline-thumb-size: 14px;
   --poster-background-color: #000000;
   --settings-menu-background: #ffffffcc;
   --settings-menu-background-hover: var(--theme-color);
@@ -262,12 +266,15 @@
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb {
   position: absolute;
-  left: 0;
   bottom: calc(100% + 30px);
   border-radius: 5px;
   transform: translateX(-50%);
-  background-color: var(--settings-menu-background);
+  background-color: var(--timeline-thumb-background);
+  width: 90px;
+  height: 30px;
   display: none;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb.jkplayer-preview {
   width: 158px;
   height: 90px;
 }
@@ -276,7 +283,6 @@
   bottom: 5px;
   left: 50%;
   transform: translateX(-50%);
-  color: #ffffff;
   text-align: center;
   pointer-events: none;
   -webkit-user-select: none;
@@ -284,13 +290,13 @@
       -ms-user-select: none;
           user-select: none;
   white-space: nowrap;
+  color: var(--timeline-thumb-color);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb #jkplayer-timeline-thumb-name {
   position: absolute;
   bottom: -25px;
   left: 50%;
   transform: translateX(-50%);
-  color: #ffffff;
   text-align: center;
   width: 100%;
   overflow: hidden;
@@ -304,6 +310,7 @@
   padding: 0 10px;
   box-sizing: border-box;
   transition: color 0.1s;
+  color: var(--timeline-thumb-chapter-name-color);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-volume-box {
   flex: 1;

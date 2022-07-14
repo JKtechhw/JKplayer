@@ -11,8 +11,8 @@
 <body>
     <h1>JKplayer</h1>
     <div id="container">
-        <video crossorigin="anonymous" controls id="player" poster="./Images/poster.jpg">
-            <source src="./videos/Mr.Robot-1.1_1080.mp4" type="video/mp4" size="1080" />
+        <video crossorigin="anonymous" controls id="player" poster="./Images/poster.jpg" src="./videos/Mr.Robot-1.1_1080.mp4">
+            <!-- <source src="./videos/Mr.Robot-1.1_1080.mp4" type="video/mp4" size="1080" /> -->
             <source src="./videos/Mr.Robot-1.1_720.mp4" type="video/mp4" size="720" />
             <source src="./videos/Mr.Robot-1.1_576.mp4" type="video/mp4" size="576" />
             <source src="./videos/Mr.Robot-1.1_480.mp4" type="video/mp4" size="480" />
@@ -31,7 +31,10 @@
     <script src="js/demo.js"></script>
     <script>
         let settings = {
-            allowDownload: true
+            allowDownload: true,
+            speedOptions: [0.5,1,2,4],
+            allowTimelineThumbnail: false,
+            debugging: true
         }
 
         let times = {
