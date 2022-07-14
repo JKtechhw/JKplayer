@@ -7,7 +7,6 @@ class JKplayer {
         this.playerSettings = settings;
         if(this.targetVideoNode) {
             if(this.targetVideoNode.nodeName.toLowerCase() === "video") {
-                this.targetVideoNode.style.opacity = 0;
                 this.videoData = videoData;
                 this.translateObject = {
                     download: "Stáhnout",
@@ -30,10 +29,9 @@ class JKplayer {
                     cantPlayVideo: "Video nelze přehrát",
                     unsupportedVideoByBrowser: "Váš prohlížeč nepodporuje formát videa"
                 }
-                //TODO wrong file cant loadedmetadata
-                //this.checkMediaStatus();
-                this.targetVideoNode.addEventListener("loadedmetadata", this.checkMediaStatus.bind(this));
-                this.targetVideoNode.load();
+                this.setPlayer();
+                //this.targetVideoNode.addEventListener("loadedmetadata", this.checkMediaStatus.bind(this));
+                //this.targetVideoNode.load();
             }
 
             else {
@@ -43,24 +41,6 @@ class JKplayer {
 
         else {
             console.error("Target video element doesn't exist!");
-        }
-    }
-
-    checkMediaStatus() {
-        if(this.targetVideoNode.currentSrc) {
-            let sourceType = this.getSourceTypeFromFilename(this.targetVideoNode.currentSrc);
-            if(this.targetVideoNode.canPlayType(sourceType) === "") {
-                this.errorScreen(this.translateObject.unsupportedVideoByBrowser);
-            }
-
-            else {
-                this.setPlayer();
-            }
-        }
-
-        else {
-            console.error("Video source isn't provided");
-            this.errorScreen(this.translateObject.cantPlayVideo);
         }
     }
     
@@ -87,7 +67,6 @@ class JKplayer {
             this.setDesktopEvents();
         }
 
-
         this.setKeys();
         this.loadLocalStorage();
         this.generateTimelineThumbPreview();
@@ -113,6 +92,7 @@ class JKplayer {
         if(this.storageSettings) {
             await this.storageSettings.volume ? this.videoElement.volume =  this.storageSettings.volume : this.videoElement.volume = this.playerSettings.volume || 1;
             this.volumeActive.style.width = Number(this.videoElement.volume) * 100 + "%";
+            this.oldVolume = this.videoElement.volume;
             await this.storageSettings.muted ? this.videoElement.muted = true : this.videoElement.muted = false;
             if(this.videoElement.muted || this.videoElement.volume === 0) {
                 this.videoBox.classList.add("jkplayer-muted");
@@ -171,6 +151,8 @@ class JKplayer {
         this.videoBox.id = "jkplayer-box";
         this.videoBox.classList.add("jkplayer-paused");
 
+        await this.targetVideoNode.replaceWith(this.videoBox);
+
         this.videoBox.style.aspectRatio = `${this.targetVideoNode.videoWidth} / ${this.targetVideoNode.videoHeight}`;
 
         //Create new video element
@@ -209,8 +191,6 @@ class JKplayer {
         this.centerReplayButton = document.createElement("button");
         this.centerReplayButton.id = "jkplayer-center-replay-button";
         this.videoBox.appendChild(this.centerReplayButton);
-
-        await this.targetVideoNode.replaceWith(this.videoBox);
     }
 
     async buildVideoElement() {
@@ -219,6 +199,7 @@ class JKplayer {
             this.videoElement.id = "jkplayer-video";
             this.videoElement.setAttribute("playsinline", "");
             this.videoElement.setAttribute("crossorigin", "");
+            this.videoBox.appendChild(this.videoElement);
 
             //Add video sources
             let sources = this.targetVideoNode.querySelectorAll("source");
@@ -275,7 +256,6 @@ class JKplayer {
                         console.error(e);
                     }
                 });
-                this.videoBox.appendChild(this.videoElement);
             }
 
             else {
@@ -532,22 +512,25 @@ class JKplayer {
     }
 
     buildChapters(chapters) {
-        if(this.timelistChaptersBox.querySelector(".jkplayer-chapter")) {
-            return;
-        }
-
+        this.timelistChaptersBox.innerHTML = "";
         if(chapters && Array.isArray(chapters)) {
             let videoDuration = this.videoDuration / 100;
             //Sort chapters by time
             chapters.sort((a, b) => {
                 return a.time.localeCompare(b.time);
             });
+
             chapters.forEach((chapterData, index) => {
+                let time;
                 if(isNaN(chapterData.time)) {
-                    chapterData.time = this.secondsFromTime(chapterData.time);
+                    time = this.secondsFromTime(chapterData.time);
                 }
 
-                if(chapterData.time <= this.videoDuration && chapterData.time >= 0) {
+                else {
+                    time = chapterData.time;
+                }
+
+                if(time <= this.videoDuration && time >= 0) {
                     let chapter = document.createElement("div");
                     chapter.classList.add("jkplayer-chapter");
                     let endTime = chapters[index + 1] ? this.secondsFromTime(chapters[index + 1].time) : this.videoDuration;
@@ -556,8 +539,8 @@ class JKplayer {
                         endTime = this.videoDuration;
                     }
 
-                    let width = this.widthFromTime(endTime - chapterData.time);
-                    let left = (chapterData.time / videoDuration);
+                    let width = this.widthFromTime(endTime - time);
+                    let left = (time / videoDuration);
 
                     chapter.style.width = `calc(${width}% - 3px)`;
                     chapter.style.left = left + "%";
@@ -1018,10 +1001,24 @@ class JKplayer {
     }
 
     videoOnload() {
-        this.videoDuration = this.videoElement.duration;
-        this.videoLengthSpan.innerText = this.timeFromSeconds(this.videoDuration);
-        this.currentTime.innerText = this.timeFromSeconds(this.videoElement.currentTime);
-        this.buildChapters(this.videoData.chapters);
+        if(this.videoElement.currentSrc) {
+            let sourceType = this.getSourceTypeFromFilename(this.videoElement.currentSrc);
+            if(this.videoElement.canPlayType(sourceType) === "") {
+                this.errorScreen(this.translateObject.unsupportedVideoByBrowser);
+            }
+
+            else {
+                this.videoDuration = this.videoElement.duration;
+                this.videoLengthSpan.innerText = this.timeFromSeconds(this.videoDuration);
+                this.currentTime.innerText = this.timeFromSeconds(this.videoElement.currentTime);
+                this.buildChapters(this.videoData.chapters);
+            }
+        }
+
+        else {
+            console.error("Video source isn't provided");
+            this.errorScreen(this.translateObject.cantPlayVideo);
+        }
     }
 
     changeTimelineThumb(e) {
@@ -1052,6 +1049,7 @@ class JKplayer {
     }
 
     generateTimelineThumbPreview() {
+        console.time("thumb");
         this.thumbnails = [];
 
         var thumbnailWidth = 158;
@@ -1151,6 +1149,7 @@ class JKplayer {
             });
 
             console.log("done...");
+            console.timeEnd("thumb");
         });
     }
 
@@ -1558,6 +1557,7 @@ class JKplayer {
     }
 
     clean() {
+        this.videoElement.load();
         delete this.targetVideoNode;
     }
 }

@@ -278,17 +278,8 @@
                     user-select: none;
 
                     &:hover {
-                        height: calc(var(--range-height) * 1.5);
+                        height: calc(var(--range-height) * 1.25);
                         border-radius: calc(var(--range-height) * 2);
-                    }
-                }
-
-                &:active + #jkplayer-timeline-range {
-                    #jkplayer-timeline-range-current {
-                        &::before {
-                            border: var(--range-thumb-border-size) solid var(--range-thumb-border-color);
-                            background-clip: padding-box;
-                        }
                     }
                 }
             }

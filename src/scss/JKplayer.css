@@ -257,12 +257,8 @@
           user-select: none;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box .jkplayer-chapter:hover {
-  height: calc(var(--range-height) * 1.5);
+  height: calc(var(--range-height) * 1.25);
   border-radius: calc(var(--range-height) * 2);
-}
-#jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-chapters-box:active + #jkplayer-timeline-range #jkplayer-timeline-range-current::before {
-  border: var(--range-thumb-border-size) solid var(--range-thumb-border-color);
-  background-clip: padding-box;
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb {
   position: absolute;
