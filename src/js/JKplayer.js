@@ -205,7 +205,7 @@ class JKplayer {
 
     async buildVideoElement() {
         //TODO detect multiple sources with same size
-        return new Promise(async (resolve, reject) => {
+        //return new Promise(async (resolve, reject) => {
             this.videoElement = document.createElement("video");
             this.videoElement.id = "jkplayer-video";
 
@@ -231,127 +231,101 @@ class JKplayer {
             /*
                 TODO If muted
             */
+            let sources = this.targetVideoNode.querySelectorAll("source");
 
-            let addVideoSources = async () => {
-                return new Promise(async resolve => {
-                    let sources = this.targetVideoNode.querySelectorAll("source");
+            if(this.targetVideoNode.src) {
+                let sourceData;
+                try {
+                    sourceData = await this.getVideoData(this.targetVideoNode.src);
+                    let newSource = document.createElement("source");
+                    newSource.src = this.targetVideoNode.src;
+                    newSource.type = this.getSourceTypeFromFilename(this.targetVideoNode.src);
+                    newSource.setAttribute("size", sourceData.videoHeight);
+                    this.videoElement.appendChild(newSource);
+                    this.videoSources.push(newSource);
+                    console.log("Adding source from video element");
+                }
 
-                    if(this.targetVideoNode.src) {
-                        let sourceData;
-                        try {
-                            sourceData = await this.getVideoData(this.targetVideoNode.src);
-                            let newSource = document.createElement("source");
-                            newSource.src = this.targetVideoNode.src;
-                            newSource.type = this.getSourceTypeFromFilename(this.targetVideoNode.src);
-                            newSource.setAttribute("size", sourceData.videoHeight);
-                            this.videoElement.appendChild(newSource);
-                            this.videoSources.push(newSource);
-                            console.log("Adding source from video element");
-                        }
-        
-                        catch(e) {
-                            console.error(e);
-                        }
-                    }
-
-                    //TODO if source is in video element
-
-                    if(sources.length >= 1) {
-                        sources.forEach(async (source, index) => {
-                            try {
-                                let newSource = document.createElement("source");
-                                newSource.src = source.src;
-                                newSource.type = source.type || this.getSourceTypeFromFilename(source.src);
-                                if(newSource.hasAttribute("size")) {
-                                    newSource.setAttribute("size", source.getAttribute("size"));
-                                }
-                
-                                else {
-                                    let height = await this.getVideoData(source.src);
-                                    newSource.setAttribute("size", height.videoHeight);
-                                }
-                
-                                this.videoElement.appendChild(newSource);
-                                this.videoSources.push(newSource);
-                                console.log("Adding video source");
-                            }
-                
-                            catch(e) {
-                                console.error(e);
-                            }
-
-                            
-                            if(index == sources.length - 1) {
-                                this.videoSources.sort((a,b) => b.size - a.size);
-                                resolve();
-                            }
-                        });
-                    }
-
-                    else {
-                        resolve();
-                    }
-                });
+                catch(e) {
+                    console.error(e);
+                }
             }
 
-            //Add video sources
-            await addVideoSources();
+            //TODO if source is in video element
+
+            if(sources.length >= 1) {
+                //sources.forEach(async(source, index) => {
+                    for await (const source of sources) {
+                    try {
+                        let newSource = document.createElement("source");
+                        newSource.src = source.src;
+                        newSource.type = source.type || this.getSourceTypeFromFilename(source.src);
+                        if(newSource.hasAttribute("size")) {
+                            newSource.setAttribute("size", source.getAttribute("size"));
+                        }
+        
+                        else {
+                            let height = await this.getVideoData(source.src);
+                            newSource.setAttribute("size", height.videoHeight);
+                        }
+        
+                        this.videoElement.appendChild(newSource);
+                        this.videoSources.push(newSource);
+                        console.log("Adding video source");
+                    }
+        
+                    catch(e) {
+                        console.error(e);
+                    }
+                }
+            }
 
             //Add captions tracks
             let textTracks = this.targetVideoNode.querySelectorAll("track");
             if(textTracks.length > 0) {
-                textTracks.forEach(async (track, index) => {
-                    try {
-                        let captions = await fetch(track.src);
-                        captions = await captions.text();
-                        if(captions.includes("�")) {
-                            console.error(`Caption source ${track.src} isn't utf-8`);
+                for await (const track of textTracks) {
+                try {
+                    let captions = await fetch(track.src);
+                    captions = await captions.text();
+                    if(captions.includes("�")) {
+                        console.error(`Caption source ${track.src} isn't utf-8`);
+                        return;
+                    }
+
+                    else {
+                        let src;
+                        if(captions.startsWith("WEBVTT")) {
+                            src = track.src;
+                        }
+
+                        else if(track.src.substring(track.src.lastIndexOf('.') + 1) === "srt") {
+                            captions = this.srtToVtt(captions);
+                            console.log("Successfully converted from srt to vtt");
+                            const blob = new Blob([captions], {type : "text/plain;charset=utf-8"});
+                            src = URL.createObjectURL(blob);
+                        }
+
+                        else {
+                            console.error(`Unsupported captions format from ${track.src}`);
                             return;
                         }
-    
-                        else {
-                            let src;
-                            if(captions.startsWith("WEBVTT")) {
-                                src = track.src;
-                            }
-    
-                            else if(track.src.substring(track.src.lastIndexOf('.') + 1) === "srt") {
-                                captions = this.srtToVtt(captions);
-                                console.log("Successfully converted from srt to vtt");
-                                const blob = new Blob([captions], {type : "text/plain;charset=utf-8"});
-                                src = URL.createObjectURL(blob);
-                            }
-    
-                            else {
-                                console.error(`Unsupported captions format from ${track.src}`);
-                                return;
-                            }
-    
-                            let newTrack = document.createElement("track");
-                            newTrack.kind = "captions";
-                            newTrack.label = track.label;
-                            newTrack.srclang = track.srclang;
-                            newTrack.src = src;
-                            this.videoElement.appendChild(newTrack);
-                            this.textSources.push(newTrack);
-                            console.log("Adding captions source");
-                        }
 
-                        if(index === textTracks.length - 1) {
-                            resolve();
-                        }
+                        let newTrack = document.createElement("track");
+                        newTrack.kind = "captions";
+                        newTrack.label = track.label;
+                        newTrack.srclang = track.srclang;
+                        newTrack.src = src;
+                        this.videoElement.appendChild(newTrack);
+                        this.textSources.push(newTrack);
+                        console.log("Adding captions source");
                     }
-    
-                    catch(e) {
-                        console.error(e);
-                    }
-                });
-            }
+                }
 
-            else {
-                resolve();
+                catch(e) {
+                    console.error(e);
+                }
             }
-        });
+        }
     }
 
     buildControlsPanel() {
@@ -568,12 +542,16 @@ class JKplayer {
                     optionElement.addEventListener("click", () => {
                         this.changeCaptionsSource(submenuOption.value);
                     });
+
+                    submenuOption.value ? optionElement.dataset.icon = submenuOption.value : null;
                 }
 
                 else if(option.name === this.translateObject.quality) {
                     optionElement.addEventListener("click", () => {
                         this.changeVideoSource(submenuOption.value);
                     });
+
+                    submenuOption.value ? optionElement.dataset.icon = "HD" : null;
                 }
 
                 else if(option.name === this.translateObject.speed) {
