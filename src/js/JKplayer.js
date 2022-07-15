@@ -282,6 +282,7 @@ class JKplayer {
 
                             
                             if(index == sources.length - 1) {
+                                this.videoSources.sort((a,b) => b.size - a.size);
                                 resolve();
                             }
                         });
@@ -528,6 +529,7 @@ class JKplayer {
         options.forEach(option => {
             let mainOptionElement = document.createElement("div");
             mainOptionElement.classList.add("jkplayer-settions-option");
+            mainOptionElement.dataset.screenName = option.name;
             let optionName = document.createElement("span");
             optionName.classList.add("jkplayer-settings-name");
             optionName.innerText = option.name;
@@ -1422,6 +1424,8 @@ class JKplayer {
         }
 
         if(id >= 0) {
+            let optionInSettings = this.settingsMenu.querySelector(`.jkplayer-settings-screen-main [data-screen-name="${this.translateObject.captions}"] .jkplayer-settings-active-value`);
+            optionInSettings.innerText = this.translateObject.disabled;
             this.videoBox.classList.remove("jkplayer-subtitles-enabled");
             this.videoElement.textTracks[id].mode = "disabled";
             this.videoElement.textTracks[id].removeEventListener('cuechange', this.captionsChangeEvent);

@@ -411,6 +411,7 @@
                 overflow: hidden;
                 visibility: hidden;
                 bottom: calc(100% + 10px);
+                max-height: 50px;
                 right: -10px;
                 position: absolute;
                 background-color: var(--settings-menu-background);

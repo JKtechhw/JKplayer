@@ -11,11 +11,11 @@
 <body>
     <h1>JKplayer</h1>
     <div id="container">
-        <video playsinline controls id="player" poster="./Images/poster.jpg" src="./videos/Mr.Robot-1.1_1080.mp4">
-            <!-- <source src="./videos/Mr.Robot-1.1_1080.mp4" type="video/mp4" size="1080" />
+        <video playsinline controls id="player" poster="./Images/poster.jpg">
+            <source src="./videos/Mr.Robot-1.1_1080.mp4" type="video/mp4" size="1080" />
             <source src="./videos/Mr.Robot-1.1_720.mp4" type="video/mp4" size="720" />
             <source src="./videos/Mr.Robot-1.1_576.mp4" type="video/mp4" size="576" />
-            <source src="./videos/Mr.Robot-1.1_480.mp4" type="video/mp4" size="480" /> -->
+            <source src="./videos/Mr.Robot-1.1_480.mp4" type="video/mp4" size="480" />
 
             <track kind="captions" label="Česky" srclang="cs" src="videos/Mr.Robot-1.1-cs.srt" />
             <track kind="captions" label="English" srclang="en" src="videos/Mr.Robot-1.1-en.vtt" />
@@ -32,7 +32,7 @@
     <script>
         let settings = {
             allowDownload: true,
-            speedOptions: [0.5,1,2,4],
+            //speedOptions: [0.5,1,2,4],
             allowTimelineThumbnail: false,
             pathToIcons: "/src/icons/",
             debugging: true
