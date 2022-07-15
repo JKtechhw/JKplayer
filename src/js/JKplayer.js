@@ -29,7 +29,7 @@ class JKplayer {
                     unsupportedVideoByBrowser: "Váš prohlížeč nepodporuje formát videa"
                 }
 
-                this.debugging(this.playerSettings.debugging);
+                //this.debugging(this.playerSettings.debugging);
                 this.setPlayer();
             }
 
@@ -55,7 +55,7 @@ class JKplayer {
             this.isMobile = false;
         }
 
-        this.preloadIcons("/src/icons/");
+        this.preloadIcons(this.playerSettings.pathToIcons || "/src/icons/");
         await this.buildVideoBox();
         this.setVideoEvents();
         ///** Use navigator.userAgentData.mobile, navigator.userAgent just for developing tools */
@@ -93,32 +93,34 @@ class JKplayer {
     }
 
     async loadLocalStorage() {
-        this.storageSettings = JSON.parse(localStorage.getItem("jkplayer"));
-        if(this.storageSettings) {
-            console.log("Loading data from local storage");
-            await this.storageSettings.volume ? this.videoElement.volume =  this.storageSettings.volume : this.videoElement.volume = this.playerSettings.volume || 1;
-            this.volumeActive.style.width = Number(this.videoElement.volume) * 100 + "%";
-            this.oldVolume = this.videoElement.volume;
-            await this.storageSettings.muted ? this.videoElement.muted = true : this.videoElement.muted = false;
-
-            if(this.videoElement.muted || this.videoElement.volume === 0) {
-                this.videoBox.classList.add("jkplayer-muted");
-                this.volumeLabel.dataset.tooltip = this.translateObject.unmute;
-            }
-
-            else {
-                this.volumeLabel.dataset.tooltip = this.translateObject.mute;
-            }
-            this.storageSettings.speed ? this.videoElement.playbackRate = this.storageSettings.speed : this.videoElement.playbackRate = 1;
-            this.storageSettings.captions ? this.changeCaptionsSource(this.storageSettings.captions) : null;
-            this.storageSettings.quality ? this.changeVideoSource(this.storageSettings.quality) : null;
+        console.log("Loading data from local storage");
+        let storageSettings;
+        if(localStorage.getItem("jkplayer")) {
+            storageSettings = JSON.parse(localStorage.getItem("jkplayer"));
         }
 
         else {
-            console.log("Creating record in local storage");
             localStorage.setItem("jkplayer", "{}");
-            this.storageSettings = {};
+            storageSettings = {};
         }
+
+        this.videoElement.volume = 0.44;
+
+        await storageSettings.volume ? this.videoElement.volume = storageSettings.volume : this.videoElement.volume = 1;
+        this.oldVolume = this.videoElement.volume;
+        await storageSettings.muted ? this.videoElement.muted = true : this.videoElement.muted = false;
+
+        if(this.videoElement.muted || this.videoElement.volume === 0) {
+            this.volumeLabel.dataset.tooltip = this.translateObject.unmute;
+        }
+
+        else {
+            this.volumeLabel.dataset.tooltip = this.translateObject.mute;
+        }
+
+        storageSettings.speed ? this.videoElement.playbackRate = storageSettings.speed : this.videoElement.playbackRate = 1;
+        storageSettings.captions ? this.changeCaptionsSource(storageSettings.captions) : null;
+        storageSettings.quality ? this.changeVideoSource(storageSettings.quality) : null;
     }
 
     updateStorage(name, value) {
@@ -186,64 +188,113 @@ class JKplayer {
 
         //Build controls panel
         if(this.targetVideoNode.hasAttribute("controls")) {
+            //Create center play button
+            this.centerPlayButton = document.createElement("button");
+            this.centerPlayButton.id = "jkplayer-center-play-button";
+            this.videoBox.appendChild(this.centerPlayButton);
+
+            //Create replay play button
+            this.centerReplayButton = document.createElement("button");
+            this.centerReplayButton.id = "jkplayer-center-replay-button";
+            this.videoBox.appendChild(this.centerReplayButton);
+
             this.buildControlsPanel();
             this.setControlsEvents();
         }
-
-        //Create center play button
-        this.centerPlayButton = document.createElement("button");
-        this.centerPlayButton.id = "jkplayer-center-play-button";
-        this.videoBox.appendChild(this.centerPlayButton);
-
-        //Create replay play button
-        this.centerReplayButton = document.createElement("button");
-        this.centerReplayButton.id = "jkplayer-center-replay-button";
-        this.videoBox.appendChild(this.centerReplayButton);
     }
 
     async buildVideoElement() {
+        //TODO detect multiple sources with same size
         return new Promise(async (resolve, reject) => {
             this.videoElement = document.createElement("video");
             this.videoElement.id = "jkplayer-video";
-            this.videoElement.setAttribute("playsinline", "");
-            this.videoElement.setAttribute("crossorigin", "");
+
+            if(this.targetVideoNode.hasAttribute("playsinline")) {
+                this.videoElement.setAttribute("playsinline", "");
+                this.videoElement.setAttribute("webkit-playsinline", "");
+            }
+
+            if(this.targetVideoNode.hasAttribute("crossorigin")) {
+                this.videoElement.setAttribute("crossorigin", this.videoElement.getAttribute("crossorigin"));
+            }
+
+            if(this.targetVideoNode.hasAttribute("loop")) {
+                this.videoElement.setAttribute("loop", "");
+            }
+
+            //Add background for pip
+            this.targetVideoNode.poster ? this.videoElement.poster = this.targetVideoNode.poster : null;
             this.videoBox.appendChild(this.videoElement);
             this.videoSources = [];
             this.textSources = [];
 
-            //Add video sources
-            let sources = this.targetVideoNode.querySelectorAll("source");
-            if(this.targetVideoNode.src) {
-                let sourceData;
-                try {
-                    sourceData = await this.getVideoData(this.targetVideoNode.src);
-                }
+            /*
+                TODO If muted
+            */
 
-                catch(e) {
-                    console.error(e);
-                }
+            let addVideoSources = async () => {
+                return new Promise(async resolve => {
+                    let sources = this.targetVideoNode.querySelectorAll("source");
 
+                    if(this.targetVideoNode.src) {
+                        let sourceData;
+                        try {
+                            sourceData = await this.getVideoData(this.targetVideoNode.src);
+                            let newSource = document.createElement("source");
+                            newSource.src = this.targetVideoNode.src;
+                            newSource.type = this.getSourceTypeFromFilename(this.targetVideoNode.src);
+                            newSource.setAttribute("size", sourceData.videoHeight);
+                            this.videoElement.appendChild(newSource);
+                            this.videoSources.push(newSource);
+                            console.log("Adding source from video element");
+                        }
+        
+                        catch(e) {
+                            console.error(e);
+                        }
+                    }
 
-                if(sourceData) {
-                    let newSource = document.createElement("source");
-                    newSource.src = this.targetVideoNode.src;
-                    newSource.type = this.getSourceTypeFromFilename(this.targetVideoNode.src);
-                    newSource.setAttribute("size", sourceData.videoHeight);
-                    this.videoElement.appendChild(newSource);
-                    this.videoSources.push(newSource);
-                    console.log("Adding video from video element");
-                }
+                    //TODO if source is in video element
+
+                    if(sources.length >= 1) {
+                        sources.forEach(async (source, index) => {
+                            try {
+                                let newSource = document.createElement("source");
+                                newSource.src = source.src;
+                                newSource.type = source.type || this.getSourceTypeFromFilename(source.src);
+                                if(newSource.hasAttribute("size")) {
+                                    newSource.setAttribute("size", source.getAttribute("size"));
+                                }
+                
+                                else {
+                                    let height = await this.getVideoData(source.src);
+                                    newSource.setAttribute("size", height.videoHeight);
+                                }
+                
+                                this.videoElement.appendChild(newSource);
+                                this.videoSources.push(newSource);
+                                console.log("Adding video source");
+                            }
+                
+                            catch(e) {
+                                console.error(e);
+                            }
+
+                            
+                            if(index == sources.length - 1) {
+                                resolve();
+                            }
+                        });
+                    }
+
+                    else {
+                        resolve();
+                    }
+                });
             }
 
-            sources.forEach(source => {
-                let newSource = document.createElement("source");
-                newSource.src = source.src;
-                newSource.type = source.type || this.getSourceTypeFromFilename(source.src);
-                newSource.setAttribute("size", source.getAttribute("size"));
-                this.videoElement.appendChild(newSource);
-                this.videoSources.push(newSource);
-                console.log("Adding video source");
-            });
+            //Add video sources
+            await addVideoSources();
 
             //Add captions tracks
             let textTracks = this.targetVideoNode.querySelectorAll("track");
@@ -264,20 +315,10 @@ class JKplayer {
                             }
     
                             else if(track.src.substring(track.src.lastIndexOf('.') + 1) === "srt") {
-                                try {
-                                    captions = this.srtToVtt(captions);
-                                }
-
-                                catch(e) {
-                                    console.error(`Error while converting captions ${track.src} from srt to vtt`);
-                                    return;
-                                }
-
-                                finally {
-                                    console.log("Successfully converted from srt to vtt");
-                                    const blob = new Blob([captions], {type : "text/plain;charset=utf-8"});
-                                    src = URL.createObjectURL(blob);
-                                }
+                                captions = this.srtToVtt(captions);
+                                console.log("Successfully converted from srt to vtt");
+                                const blob = new Blob([captions], {type : "text/plain;charset=utf-8"});
+                                src = URL.createObjectURL(blob);
                             }
     
                             else {
@@ -444,28 +485,26 @@ class JKplayer {
         let options = [];
         let storageSettings = localStorage.getItem("jkplayer") ? JSON.parse(localStorage.getItem("jkplayer")) : {};
 
-        if(this.videoElement.textTracks.length > 0) {
+        if(this.textSources.length > 0) {
             let captionsOption = {
                 name: this.translateObject.captions, active: storageSettings.captions || this.translateObject.disabled, value: [{name: this.translateObject.disabled, value: false}]
             }
 
-            for(let i = 0; i < this.videoElement.textTracks.length; i++) {
-                let option = {name: this.videoElement.textTracks[i].label, value: this.videoElement.textTracks[i].language}
+            for(let i = 0; i < this.textSources.length; i++) {
+                let option = {name: this.textSources[i].label, value: this.textSources[i].srclang}
                 captionsOption.value.push(option);
             }
 
             options.push(captionsOption);
         }
 
-        let videoSources = this.videoElement.querySelectorAll("source");
-
-        if(videoSources.length > 1) {
+        if(this.videoSources.length > 1) {
             let qualityOptions = {
                 name: this.translateObject.quality, active: storageSettings.quality || this.translateObject.auto, value: [{name: this.translateObject.auto, value: this.translateObject.auto}]
             }
 
-            for(let i = 0; i < videoSources.length; i++) {
-                let option = { name: videoSources[i].getAttribute("size") + "p", value: videoSources[i].getAttribute("size")}
+            for(let i = 0; i < this.videoSources.length; i++) {
+                let option = { name: this.videoSources[i].getAttribute("size") + "p", value: this.videoSources[i].getAttribute("size")}
                 qualityOptions.value.push(option);
             }
 
@@ -605,6 +644,7 @@ class JKplayer {
         }
 
         else {
+            console.log("No chapters provided");
             let chapter = document.createElement("div");
             chapter.classList.add("jkplayer-chapter");
             chapter.style.width = "100%";
@@ -616,11 +656,8 @@ class JKplayer {
     setVideoEvents() {
         //Prevent context menu
         this.videoBox.addEventListener("contextmenu", (e) => {
+            console.log("Prevented from context menu")
             e.preventDefault();
-        });
-
-        this.videoElement.addEventListener("error", (e) => {
-            console.error(e);
         });
 
         //Poster box
@@ -638,6 +675,7 @@ class JKplayer {
 
         //Reply
         this.videoElement.addEventListener("ended", () => {
+            console.log("Event: ended");
             this.videoBox.classList.add("jkplayer-replay");
             this.controlsPlayLabel.dataset.tooltip = this.translateObject.replay;
         });
@@ -673,40 +711,6 @@ class JKplayer {
             this.videoBox.classList.add("jkplayer-playing");
         });
 
-        
-        this.centerReplayButton.addEventListener("click", () => {
-            this.videoBox.classList.remove("jkplayer-replay");
-            this.videoElement.currentTime = 0;
-            this.videoElement.play();
-        });
-
-        //Volume
-        this.videoElement.addEventListener("volumechange", () => {
-            console.log("Event: volumechange");
-            this.updateStorage("volume", this.videoElement.volume.toFixed(2));
-            if(this.videoElement.volume === 0 || this.videoElement.muted) {
-                this.videoBox.classList.add("jkplayer-muted");
-                this.volumeLabel.dataset.tooltip = this.translateObject.unmute;
-            }
-
-            else {
-                this.videoBox.classList.remove("jkplayer-muted");
-                this.videoElement.muted = false;
-                this.volumeLabel.dataset.tooltip = this.translateObject.mute;
-            }
-
-            this.volumeActive.style.width = Number(this.videoElement.volume * 100) + "%";
-        });
-
-        //Time events
-        this.videoElement.addEventListener("timeupdate", () => {
-            console.log("Event: timeupdate");
-            let width = this.widthFromTime(this.videoElement.currentTime);
-            this.timelineRange.style.width = width + "%";
-            this.timelineBuffered.style.left = width + "%";
-            this.currentTime.innerText = this.timeFromSeconds(this.videoElement.currentTime);
-        });
-
         //PIP events
         this.videoElement.addEventListener("enterpictureinpicture", () => {
             this.videoBox.classList.add("jkplayer-pip");
@@ -724,6 +728,8 @@ class JKplayer {
         this.videoElement.addEventListener("canplay", () => {
             this.videoBox.classList.remove("jkplayer-loading");
         });
+
+        console.log("Settings video events end");
     }
 
     setControlsEvents() {
@@ -768,6 +774,41 @@ class JKplayer {
         this.captionsChangeEvent = this.changeCaptions.bind(this);
 
         this.settingsButton.addEventListener("click", this.toggleSettings.bind(this));
+
+
+        this.centerReplayButton.addEventListener("click", () => {
+            console.log("Play event from center play button menu");
+            this.videoBox.classList.remove("jkplayer-replay");
+            this.videoElement.currentTime = 0;
+            this.videoElement.play();
+        });
+
+        //Volume
+        this.videoElement.addEventListener("volumechange", () => {
+            console.log("Event: volumechange");
+            this.updateStorage("volume", this.videoElement.volume.toFixed(2));
+            if(this.videoElement.volume === 0 || this.videoElement.muted) {
+                this.videoBox.classList.add("jkplayer-muted");
+                this.volumeLabel.dataset.tooltip = this.translateObject.unmute;
+            }
+
+            else {
+                this.videoBox.classList.remove("jkplayer-muted");
+                this.videoElement.muted = false;
+                this.volumeLabel.dataset.tooltip = this.translateObject.mute;
+            }
+
+            this.volumeActive.style.width = Number(this.videoElement.volume * 100) + "%";
+        });
+
+        //Time events
+        this.videoElement.addEventListener("timeupdate", () => {
+            console.log("Event: timeupdate");
+            let width = this.widthFromTime(this.videoElement.currentTime);
+            this.timelineRange.style.width = width + "%";
+            this.timelineBuffered.style.left = width + "%";
+            this.currentTime.innerText = this.timeFromSeconds(this.videoElement.currentTime);
+        });
     }
 
     setKeys() {
@@ -1062,6 +1103,7 @@ class JKplayer {
         if(this.videoElement.currentSrc) {
             this.videoBox.style.aspectRatio = `${this.videoElement.videoWidth} / ${this.videoElement.videoHeight}`;
             let sourceType = this.getSourceTypeFromFilename(this.videoElement.currentSrc);
+
             if(this.videoElement.canPlayType(sourceType) === "") {
                 this.errorScreen(this.translateObject.unsupportedVideoByBrowser);
             }
@@ -1334,7 +1376,7 @@ class JKplayer {
 
     changeVideoSource(resolution) {
         if(resolution === this.translateObject.auto) {
-            console.log("Auto check resolution")
+            console.log("Auto check resolution");
         }
 
         else {
@@ -1425,6 +1467,7 @@ class JKplayer {
     }
 
     changeCaptionsSource(lang) {
+        this.captionsBox.innerText = "";
         for (let i = 0 ; i < this.videoElement.textTracks.length; i++) {
             if(this.videoElement.textTracks[i].mode === "hidden") {
                 this.videoElement.textTracks[i].mode = "disabled";
