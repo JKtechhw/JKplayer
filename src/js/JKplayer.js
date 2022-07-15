@@ -551,7 +551,32 @@ class JKplayer {
                         this.changeVideoSource(submenuOption.value);
                     });
 
-                    submenuOption.value ? optionElement.dataset.icon = "HD" : null;
+                    if(!isNaN(submenuOption.value)) {
+                        if(submenuOption.value >= 4320) {
+                            optionElement.dataset.icon = "8K";
+                        }
+
+                        else if(submenuOption.value >= 2160) {
+                            optionElement.dataset.icon = "4K";
+                        }
+
+                        else if(submenuOption.value >= 2160) {
+                            optionElement.dataset.icon = "UHD";
+                        }
+
+                        else if(submenuOption.value >= 1080) {
+                            alert()
+                            optionElement.dataset.icon = "FHD";
+                        }
+
+                        else if(submenuOption.value >= 720) {
+                            optionElement.dataset.icon = "HD";
+                        }
+
+                        else {
+                            optionElement.dataset.icon = "SD";
+                        }
+                    }
                 }
 
                 else if(option.name === this.translateObject.speed) {
@@ -970,7 +995,7 @@ class JKplayer {
         });
 
         this.timelineBox.addEventListener("mousemove", (e) => {
-            this.changeTimelineThumb(e);
+            this.changeTimelineThumb(e.clientX, e.target);
         });
 
         this.timelineBox.addEventListener("mouseleave", () => {
@@ -1011,6 +1036,7 @@ class JKplayer {
 
         //Update time
         let moveTimeUpdate = (e) => {
+            this.changeTimelineThumb(e.changedTouches[0].clientX, e.target);
             let bounding = this.timelineBox.getBoundingClientRect();
             let width = ((e.changedTouches[0].clientX - bounding.left) / bounding.width) * 100;
             width = width > 100 ? 100 : width;
@@ -1019,6 +1045,7 @@ class JKplayer {
         }
 
         let finalTimeUpdate = (e) => {
+            this.timelineThumb.style.display = "none";
             document.removeEventListener("touchmove", moveTimeUpdate);
             document.removeEventListener("touchend", finalTimeUpdate);
             let width = moveTimeUpdate(e);
@@ -1042,7 +1069,10 @@ class JKplayer {
             if(this.posterBox) {
                 this.posterBox.remove();
             }
+
             moveTimeUpdate(e);
+
+            this.timelineThumb.style.display = "block";
             document.addEventListener("touchmove", moveTimeUpdate);
             document.addEventListener("touchend", finalTimeUpdate);
         });
@@ -1102,18 +1132,18 @@ class JKplayer {
         }
     }
 
-    changeTimelineThumb(e) {
+    changeTimelineThumb(clientX, target) {
         let timelineBound = this.timelineBox.getBoundingClientRect();
         let timelineWidth = this.timelineBox.clientWidth;
         let videoDuration = this.videoDuration;
-        let progresstime = Math.floor(((e.clientX - timelineBound.left) / timelineWidth) * videoDuration);
+        let progresstime = Math.floor(((clientX - timelineBound.left) / timelineWidth) * videoDuration);
         if(progresstime >= 0) {
             this.timelineThumbTime.innerText = this.timeFromSeconds(progresstime);
-            this.timelineThumb.style.left = `${e.clientX - timelineBound.left}px`;
+            this.timelineThumb.style.left = `${clientX - timelineBound.left}px`;
 
-            if(e.target.classList.contains("jkplayer-chapter")) {
-                this.timelineThumbName.innerText = e.target.dataset.name || "";
-                this.timelineThumbName.style.color = e.target.style.backgroundColor || "";
+            if(target.classList.contains("jkplayer-chapter")) {
+                this.timelineThumbName.innerText = target.dataset.name || "";
+                this.timelineThumbName.style.color = target.style.backgroundColor || "";
             }
     
             if(this.thumbnails) {
