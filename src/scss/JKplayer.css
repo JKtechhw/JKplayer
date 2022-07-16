@@ -269,10 +269,14 @@
   bottom: calc(100% + 30px);
   border-radius: 5px;
   transform: translateX(-50%);
+  transition: 0.2s bottom;
   background-color: var(--timeline-thumb-background);
   width: 90px;
   height: 30px;
   display: none;
+}
+#jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb.jkplayer-no-chaptername {
+  bottom: calc(100% + 15px);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb.jkplayer-preview {
   width: 158px;
@@ -294,7 +298,7 @@
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb #jkplayer-timeline-thumb-name {
   position: absolute;
-  bottom: -25px;
+  bottom: -22px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;

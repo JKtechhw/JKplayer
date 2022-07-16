@@ -280,6 +280,11 @@ class JKplayer {
                 }
             }
 
+            //Sort video sources by size
+            this.videoSources.sort((a, b) => {
+                return b.getAttribute("size") - a.getAttribute("size");
+            });
+
             //Add captions tracks
             let textTracks = this.targetVideoNode.querySelectorAll("track");
             if(textTracks.length > 0) {
@@ -565,7 +570,6 @@ class JKplayer {
                         }
 
                         else if(submenuOption.value >= 1080) {
-                            alert()
                             optionElement.dataset.icon = "FHD";
                         }
 
@@ -606,7 +610,7 @@ class JKplayer {
 
     buildChapters(chapters) {
         this.timelistChaptersBox.innerHTML = "";
-        if(chapters && Array.isArray(chapters)) {
+        if(chapters && Array.isArray(chapters) && chapters.length > 1) {
             let videoDuration = this.videoDuration / 100;
             //Sort chapters by time
             chapters.sort((a, b) => {
@@ -1036,7 +1040,8 @@ class JKplayer {
 
         //Update time
         let moveTimeUpdate = (e) => {
-            this.changeTimelineThumb(e.changedTouches[0].clientX, e.target);
+            console.log("Changing timeline thumb");
+            this.changeTimelineThumb(e.changedTouches[0].clientX, document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY));
             let bounding = this.timelineBox.getBoundingClientRect();
             let width = ((e.changedTouches[0].clientX - bounding.left) / bounding.width) * 100;
             width = width > 100 ? 100 : width;
@@ -1056,7 +1061,7 @@ class JKplayer {
             }
         }
 
-        this.timelineBox.addEventListener("touchstart", (e) => {
+        this.timelineBox.addEventListener("touchstart", async (e) => {
             if(this.videoElement.paused) {
                 this.oldPlay = false;
             }
@@ -1142,8 +1147,16 @@ class JKplayer {
             this.timelineThumb.style.left = `${clientX - timelineBound.left}px`;
 
             if(target.classList.contains("jkplayer-chapter")) {
-                this.timelineThumbName.innerText = target.dataset.name || "";
-                this.timelineThumbName.style.color = target.style.backgroundColor || "";
+                if(target.dataset.name) {
+                    this.timelineThumb.classList.remove("jkplayer-no-chaptername");
+                    this.timelineThumbName.innerText = target.dataset.name || "";
+                    this.timelineThumbName.style.color = target.style.backgroundColor || "";
+                }
+
+                else {
+                    this.timelineThumb.classList.add("jkplayer-no-chaptername");
+                    this.timelineThumbName.innerText = "";
+                }
             }
     
             if(this.thumbnails) {
