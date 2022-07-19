@@ -12,9 +12,9 @@
     <h1>JKplayer</h1>
     <div id="container">
         <video playsinline controls id="player" poster="./Images/poster.jpg">
-            <source src="./videos/Mr.Robot-1.1_576.mp4" type="video/mp4" size="576" />
-            <source src="./videos/Mr.Robot-1.1_720.mp4" type="video/mp4" size="720" />
             <source src="./videos/Mr.Robot-1.1_1080.mp4" type="video/mp4" size="1080" />
+            <source src="./videos/Mr.Robot-1.1_720.mp4" type="video/mp4" size="720" />
+            <source src="./videos/Mr.Robot-1.1_576.mp4" type="video/mp4" size="576" />
             <source src="./videos/Mr.Robot-1.1_480.mp4" type="video/mp4" size="480" />
 
             <track kind="captions" label="Česky" srclang="cs" src="videos/Mr.Robot-1.1-cs.srt" />
@@ -35,13 +35,19 @@
             speedOptions: [0.5,1,2,4],
             allowTimelineThumbnail: false,
             pathToIcons: "/src/icons/",
+            skipTimeFront: 10,
+            skipTimeBack: 10,
+            saveProgress: true,
+            saveTimeInterval: 40,
+            timeToHideControls: 4,
+            aspectRatio: "16/9",
             debugging: true
         }
 
         let times = {
             chapters: [
                 {name: "1. Část", time: "00:00"},
-                {name: "2. Část", time: "10:00"},
+                {time: "10:00"},
                 {name: "3. Část", time: "20:00"},
                 {name: "4. Část", time: "30:00"},
                 {name: "5. Část", time: "40:00"},

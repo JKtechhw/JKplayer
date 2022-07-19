@@ -85,10 +85,44 @@
         -webkit-tap-highlight-color: transparent;
     }
 
-    #jkplayer-video {
+    &.jkplayer-mobile {
+        #jkplayer-controls {
+            .jkplayer-controls-button {
+                &:active {
+                    background-color: var(--theme-color);
+                }
+            }
+        }
+    }
+
+    &:not(&.jkplayer-mobile) {
+        #jkplayer-controls {
+            .jkplayer-controls-button {
+                &:hover {
+                    background-color: var(--theme-color);
+                }
+            }
+        }
+    }
+
+    #jkplayer-contextmenu {
+        background-color: rebeccapurple;
+        width: 50px;
+        height: 50px;
+        position: absolute;
+    }
+
+    #jkplayer-wrapper {
+        position: relative;
         width: 100%;
-        display: flex;
-        background-color: var(--video-background-color);
+        height: 100%;
+        
+        video {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            background-color: var(--video-background-color);
+        }
     }
 
     #jkplayer-poster {
@@ -212,10 +246,6 @@
             cursor: pointer;
             border-radius: 5px;
             transition: background 0.1s;
-
-            &:hover {
-                background: var(--theme-color);
-            }
         }
 
         #jkplayer-play-button {
@@ -271,17 +301,20 @@
             #jkplayer-chapters-box {
                 width: 100%;
                 height: var(--range-height);
-                position: absolute;
+                position: relative;
+                display: flex;
+                align-items: center;
+                cursor: pointer;
 
                 .jkplayer-chapter {
+                    user-select: none;
                     position: absolute;
-                    top: 50%;
-                    transform: translate(1.5px, -50%);
-                    height: var(--range-height);
                     border-radius: var(--range-height);
                     background-color: var(--range-background-color);
                     transition: height 0.15s, border-radius 0.15s;
-                    user-select: none;
+                    height: var(--range-height);
+                    display: inline-block;
+                    overflow: hidden;
 
                     &:hover {
                         height: calc(var(--range-height) * 1.25);
@@ -294,15 +327,36 @@
                 position: absolute;
                 bottom: calc(100% + 30px);
                 border-radius: 5px;
+                pointer-events: none;
                 transform: translateX(-50%);
-                transition: 0.2s bottom;
+                transition: 0.2s bottom, 0.2s opacity;
                 background-color: var(--timeline-thumb-background);
                 width: 90px;
                 height: 30px;
-                display: none;
+                opacity: 0;
+
+                &::after {
+                    content: "";
+                    position: absolute;
+                    left: 50%;
+                    bottom: 0;
+                    opacity: 0;
+                    transform: translateX(-50%);
+                    width: 0;
+                    height: 0;
+                    border-left: 3px solid transparent;
+                    border-right: 3px solid transparent;
+                    border-top: 5px solid var(--timeline-thumb-background);
+                    transition: opacity 0.2s, bottom 0.2s;
+                }
 
                 &.jkplayer-no-chaptername {
                     bottom: calc(100% + 15px);
+
+                    &::after {
+                        opacity: 1;
+                        bottom: -5px;
+                    }
                 }
 
                 &.jkplayer-preview {
@@ -532,6 +586,7 @@
                                 font-size: 11px;
                                 background-color: #4a5464;
                                 padding: 2px 4px;
+                                width: 14px;
                                 text-align: center;
                                 border-radius: 3px;
                                 color: #ffffff;
@@ -595,6 +650,10 @@
                     border-top: 5px solid var(--settings-menu-background);
                 }
             }
+        }
+
+        #jkplayer-cast {
+            mask-image: url("../icons/cast.svg");
         }
 
         #jkplayer-pip-button {

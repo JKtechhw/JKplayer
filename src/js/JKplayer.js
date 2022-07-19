@@ -1,5 +1,38 @@
 'use strict';
 
+/*
+    //TODO Volume indicator
+    TODO Playlist
+    TODO Skip time indicator
+    //TODO Skip time from config
+    //TODO Check sources before adding
+    TODO ? Manipulate with captions
+    TODO Play singe touch
+    TODO Doubletouch event
+    TODO Contextmenu
+    //TODO Allow download
+    TODO Update to api
+    //TODO Detect double sources with same quality
+    //TODO Build chapters only ones
+    TODO ? Reload when loading
+    TODO Auto video quality
+    //TODO build controls earlier
+    TODO Google cast
+    //TODO Video element is muted
+    TODO Debugging levels
+    TODO ? Developer tools
+    TODO Notifications
+    TODO Preload icons
+    TODO Captions disable in settings menu
+    TODO Save progress to session storage
+    //TODO Display % hovering on volume
+    TODO Buffered
+    TODO Test media keys
+    TODO Controls settings menu with arrows
+    TODO Build from object
+*/
+
+
 class JKplayer {
     constructor(targetID, settings = [], videoData = {}) {
         this.targetVideoNode = document.querySelector(targetID);
@@ -7,10 +40,13 @@ class JKplayer {
         if(this.targetVideoNode) {
             if(this.targetVideoNode.nodeName.toLowerCase() === "video") {
                 this.videoData = videoData;
+
+                //You can translate player here
                 this.translateObject = {
                     download: "Stáhnout",
                     quality: "Kvalita",
                     captions: "Titulky",
+                    cast: "Chrome cast",
                     enableCaptions: "Povolit titulky",
                     disableCaptions: "Zakázat titulky",
                     disabled: "Vypnuto",
@@ -29,7 +65,7 @@ class JKplayer {
                     unsupportedVideoByBrowser: "Váš prohlížeč nepodporuje formát videa"
                 }
 
-                //this.debugging(this.playerSettings.debugging);
+                this.debugging(this.playerSettings.debugging);
                 this.setPlayer();
             }
 
@@ -44,27 +80,19 @@ class JKplayer {
     }
     
     async setPlayer() {
-        //if(navigator.userAgentData.mobile) {
-        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Device is mobile");
-            this.isMobile = true;
-        }
-
-        else {
-            console.log("Device is desktop");
-            this.isMobile = false;
-        }
-
         this.preloadIcons(this.playerSettings.pathToIcons || "/src/icons/");
         await this.buildVideoBox();
         this.setVideoEvents();
-        ///** Use navigator.userAgentData.mobile, navigator.userAgent just for developing tools */
 
-        if(this.isMobile) {
+        //if(navigator.userAgentData.mobile) {
+        ///** Use navigator.userAgentData.mobile, navigator.userAgent just for developing tools */
+        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Device is mobile");
             this.setMobileEvents();
         }
 
         else {
+            console.log("Device is desktop");
             this.setDesktopEvents();
         }
 
@@ -79,36 +107,33 @@ class JKplayer {
     }
 
     errorScreen(message) {
+        //Display error
         localStorage.removeItem("jkplayer")
         let errorBox = document.createElement("div");
         errorBox.id = "jkplayer-error-box";
         errorBox.innerText = message;
-        if(this.targetVideoNode) {
-            this.targetVideoNode.replaceWith(errorBox);
-        }
-
-        else {
-            this.videoBox.replaceWith(errorBox);
-        }
+        this.videoBox.replaceWith(errorBox);
     }
 
     async loadLocalStorage() {
-        console.log("Loading data from local storage");
-        let storageSettings;
+        //Load local storage with settings
+        let localStorageSettings;
         if(localStorage.getItem("jkplayer")) {
-            storageSettings = JSON.parse(localStorage.getItem("jkplayer"));
+            console.log("Loading data from local storage");
+            localStorageSettings = await JSON.parse(localStorage.getItem("jkplayer"));
         }
 
         else {
+            console.log("Saving data to local storage");
             localStorage.setItem("jkplayer", "{}");
-            storageSettings = {};
+            localStorageSettings = {};
         }
 
+        //Apply settings from local storage
         this.videoElement.volume = 0.44;
-
-        await storageSettings.volume ? this.videoElement.volume = storageSettings.volume : this.videoElement.volume = 1;
+        await localStorageSettings.volume ? this.videoElement.volume = localStorageSettings.volume : this.videoElement.volume = 1;
         this.oldVolume = this.videoElement.volume;
-        await storageSettings.muted ? this.videoElement.muted = true : this.videoElement.muted = false;
+        await localStorageSettings.muted || this.videoElement.hasAttribute("muted") ? this.videoElement.muted = true : this.videoElement.muted = false;
 
         if(this.videoElement.muted || this.videoElement.volume === 0) {
             this.volumeLabel.dataset.tooltip = this.translateObject.unmute;
@@ -118,16 +143,41 @@ class JKplayer {
             this.volumeLabel.dataset.tooltip = this.translateObject.mute;
         }
 
-        storageSettings.speed ? this.videoElement.playbackRate = storageSettings.speed : this.videoElement.playbackRate = 1;
-        storageSettings.captions ? this.changeCaptionsSource(storageSettings.captions) : null;
-        storageSettings.quality ? this.changeVideoSource(storageSettings.quality) : null;
+        localStorageSettings.speed ? this.videoElement.playbackRate = localStorageSettings.speed : this.videoElement.playbackRate = 1;
+        localStorageSettings.captions ? this.changeCaptionsSource(localStorageSettings.captions) : null;
+        localStorageSettings.quality ? this.changeVideoSource(localStorageSettings.quality) : null;
+
+        //Session storage
+        let sessionStorageSettings;
+
+        if(sessionStorage.getItem("jkplayer")) {
+            console.log("Loading data from session storage");
+            sessionStorageSettings = await JSON.parse(sessionStorage.getItem("jkplayer"));
+            console.log("Setting time from session storage");
+        }
+        
+        else {
+            console.log("Saving data to session storage");
+            sessionStorage.setItem("jkplayer", "{}");
+            sessionStorageSettings = {};
+        }
+
+        this.videoElement.currentTime = sessionStorageSettings.time ? sessionStorageSettings.time : 0;
     }
 
-    updateStorage(name, value) {
-        console.log(`Updating "${name}" in local storage to ${value}`)
+    updateLocalStorage(name, value) {
+        console.log(`Updating "${name}" in local storage to ${value}`);
         let settings = JSON.parse(localStorage.getItem("jkplayer"));
         settings[name] = value;
         localStorage.setItem("jkplayer", JSON.stringify(settings));
+        this.storageSettings = settings;
+    }
+
+    updateSessionStorage(name, value) {
+        console.log(`Updating "${name}" in session storage to ${value}`)
+        let settings = JSON.parse(sessionStorage.getItem("jkplayer"));
+        settings[name] = value;
+        sessionStorage.setItem("jkplayer", JSON.stringify(settings));
         this.storageSettings = settings;
     }
 
@@ -135,6 +185,7 @@ class JKplayer {
         let icons = [
             "captions-disabled.svg",
             "captions.svg",
+            "cast.svg",
             "compress.svg",
             "expand.svg",
             "check.svg",
@@ -204,92 +255,112 @@ class JKplayer {
     }
 
     async buildVideoElement() {
-        //TODO detect multiple sources with same size
-        //return new Promise(async (resolve, reject) => {
-            this.videoElement = document.createElement("video");
-            this.videoElement.id = "jkplayer-video";
+        //Create wrapper
+        this.videoWrapper = document.createElement("div");
+        this.videoWrapper.id = "jkplayer-wrapper";
 
-            if(this.targetVideoNode.hasAttribute("playsinline")) {
-                this.videoElement.setAttribute("playsinline", "");
-                this.videoElement.setAttribute("webkit-playsinline", "");
+        //Create video element
+        this.videoElement = document.createElement("video");
+        this.videoElement.id = this.targetVideoNode.id;
+        this.videoWrapper.appendChild(this.videoElement);
+
+        //Set attributes from original element
+        if(this.targetVideoNode.hasAttribute("playsinline")) {
+            this.videoElement.setAttribute("playsinline", "");
+            this.videoElement.setAttribute("webkit-playsinline", "");
+        }
+
+        if(this.targetVideoNode.hasAttribute("crossorigin")) {
+            this.videoElement.setAttribute("crossorigin", this.videoElement.getAttribute("crossorigin"));
+        }
+
+        if(this.targetVideoNode.hasAttribute("loop")) {
+            this.videoElement.setAttribute("loop", "");
+        }
+
+        if(this.targetVideoNode.hasAttribute("muted")) {
+            this.videoElement.setAttribute("muted", "");
+        }
+
+        //Add background for pip
+        this.targetVideoNode.poster ? this.videoElement.poster = this.targetVideoNode.poster : null;
+        this.videoBox.appendChild(this.videoWrapper);
+        this.videoSources = [];
+        this.textSources = [];
+
+        //Add source from video element
+        if(this.targetVideoNode.src) {
+            try {
+                console.log("Adding source from video tag");
+                let source = document.createElement("source");
+                source.src = this.targetVideoNode.src;
+                this.targetVideoNode.insertAdjacentElement("afterbegin", source)
             }
 
-            if(this.targetVideoNode.hasAttribute("crossorigin")) {
-                this.videoElement.setAttribute("crossorigin", this.videoElement.getAttribute("crossorigin"));
+            catch(e) {
+                console.error(e);
             }
+        }
 
-            if(this.targetVideoNode.hasAttribute("loop")) {
-                this.videoElement.setAttribute("loop", "");
-            }
-
-            //Add background for pip
-            this.targetVideoNode.poster ? this.videoElement.poster = this.targetVideoNode.poster : null;
-            this.videoBox.appendChild(this.videoElement);
-            this.videoSources = [];
-            this.textSources = [];
-
-            /*
-                TODO If muted
-            */
-            let sources = this.targetVideoNode.querySelectorAll("source");
-
-            if(this.targetVideoNode.src) {
-                let sourceData;
+        //Add all remains sources
+        let sources = this.targetVideoNode.querySelectorAll("source");
+        if(sources.length >= 1) {
+            for await (const source of sources) {
                 try {
-                    sourceData = await this.getVideoData(this.targetVideoNode.src);
                     let newSource = document.createElement("source");
-                    newSource.src = this.targetVideoNode.src;
-                    newSource.type = this.getSourceTypeFromFilename(this.targetVideoNode.src);
-                    newSource.setAttribute("size", sourceData.videoHeight);
+                    newSource.src = source.src;
+                    newSource.type = source.type || this.getSourceTypeFromFilename(source.src);
+                    //If element cant be played by browser
+                    if(this.videoElement.canPlayType(newSource.type) === "") {
+                        console.error(`Browser doesn't support ${newSource.type} video format`);
+                        this.errorScreen(this.translateObject.unsupportedVideoByBrowser);
+                        continue;
+                    }
+                    
+                    //Set video size
+                    if(newSource.hasAttribute("size")) {
+                        newSource.setAttribute("size", source.getAttribute("size"));
+                    }
+    
+                    else {
+                        let height = await this.getVideoData(source.src);
+                        newSource.setAttribute("size", height.videoHeight);
+                    }
+
+                    //Check multiple sources with same size
+                    if(this.videoSources.some(element => element.getAttribute("size") === newSource.getAttribute("size"))) {
+                        console.warn(`Multiple sources for size: ${newSource.getAttribute("size")}`);
+                        continue;
+                    }
+    
+                    //Add source to sourcelist
                     this.videoElement.appendChild(newSource);
                     this.videoSources.push(newSource);
-                    console.log("Adding source from video element");
+                    console.log("Adding video source");
                 }
-
+    
                 catch(e) {
                     console.error(e);
                 }
             }
+        }
 
-            //TODO if source is in video element
+        else {
+            this.errorScreen(this.translateObject.cantPlayVideo);
+            return;
+        }
 
-            if(sources.length >= 1) {
-                //sources.forEach(async(source, index) => {
-                    for await (const source of sources) {
-                    try {
-                        let newSource = document.createElement("source");
-                        newSource.src = source.src;
-                        newSource.type = source.type || this.getSourceTypeFromFilename(source.src);
-                        if(newSource.hasAttribute("size")) {
-                            newSource.setAttribute("size", source.getAttribute("size"));
-                        }
-        
-                        else {
-                            let height = await this.getVideoData(source.src);
-                            newSource.setAttribute("size", height.videoHeight);
-                        }
-        
-                        this.videoElement.appendChild(newSource);
-                        this.videoSources.push(newSource);
-                        console.log("Adding video source");
-                    }
-        
-                    catch(e) {
-                        console.error(e);
-                    }
-                }
-            }
+        //Sort video sources by size
+        this.videoSources.sort((a, b) => {
+            return b.getAttribute("size") - a.getAttribute("size");
+        });
 
-            //Sort video sources by size
-            this.videoSources.sort((a, b) => {
-                return b.getAttribute("size") - a.getAttribute("size");
-            });
-
-            //Add captions tracks
-            let textTracks = this.targetVideoNode.querySelectorAll("track");
-            if(textTracks.length > 0) {
-                for await (const track of textTracks) {
+        //Add captions tracks
+        let textTracks = this.targetVideoNode.querySelectorAll("track");
+        if(textTracks.length > 0) {
+            for await (const track of textTracks) {
                 try {
+                    //Check file encoding
                     let captions = await fetch(track.src);
                     captions = await captions.text();
                     if(captions.includes("�")) {
@@ -298,11 +369,13 @@ class JKplayer {
                     }
 
                     else {
+                        //Check format for webvtt
                         let src;
                         if(captions.startsWith("WEBVTT")) {
                             src = track.src;
                         }
 
+                        //Convert srt to vtt
                         else if(track.src.substring(track.src.lastIndexOf('.') + 1) === "srt") {
                             captions = this.srtToVtt(captions);
                             console.log("Successfully converted from srt to vtt");
@@ -315,6 +388,7 @@ class JKplayer {
                             return;
                         }
 
+                        //Create track source
                         let newTrack = document.createElement("track");
                         newTrack.kind = "captions";
                         newTrack.label = track.label;
@@ -390,6 +464,8 @@ class JKplayer {
         this.timelineThumbName.id = "jkplayer-timeline-thumb-name";
         this.timelineThumb.appendChild(this.timelineThumbName);
 
+        this.buildChapters(this.videoData.chapters);
+
         //Create duration time
         this.videoLengthSpan = document.createElement("span");
         this.videoLengthSpan.id = "jkplayer-duration-time";
@@ -448,6 +524,9 @@ class JKplayer {
         this.settingsMenu.id = "jkplayer-settings-menu";
         this.settingsBox.appendChild(this.settingsMenu);
 
+        //Cast button
+        //this.setupCast();
+
         this.buildSettingsBox();
 
         //Fullscreen button
@@ -459,6 +538,17 @@ class JKplayer {
         this.fullscreenButton.className = "jkplayer-controls-button";
         this.fullscreenLabel.appendChild(this.fullscreenButton);
         this.videoControlsBox.appendChild(this.fullscreenLabel);
+    }
+
+    setupCast() {
+        //Create button
+        this.castLabel = document.createElement("label");
+        this.castLabel.dataset.tooltip = this.translateObject.cast;
+        this.castButton = document.createElement("div");
+        this.castButton.id = "jkplayer-cast";
+        this.castButton.classList.add("jkplayer-controls-button");
+        this.castLabel.appendChild(this.castButton);
+        this.videoControlsBox.appendChild(this.castLabel);
     }
 
     buildSettingsBox() {
@@ -489,6 +579,19 @@ class JKplayer {
             }
 
             options.push(qualityOptions);
+        }
+
+        if(this.playerSettings.allowDownload) {
+            let downloadOptions = {
+                name: this.translateObject.download, active: "", value: []
+            }
+
+            for(let i = 0; i < this.videoSources.length; i++) {
+                let option = { name: this.videoSources[i].getAttribute("size") + "p", value: this.videoSources[i].src}
+                downloadOptions.value.push(option);
+            }
+
+            options.push(downloadOptions);
         }
 
         let speedOptions =  this.playerSettings.speedOptions ||  [0.25, 0.50, 0.75, 1, 1.25, 1.5, 1.75, 2, 4];
@@ -570,7 +673,7 @@ class JKplayer {
                         }
 
                         else if(submenuOption.value >= 1080) {
-                            optionElement.dataset.icon = "FHD";
+                            optionElement.dataset.icon = "HD";
                         }
 
                         else if(submenuOption.value >= 720) {
@@ -589,14 +692,27 @@ class JKplayer {
                     });
                 }
 
+                else if(option.name === this.translateObject.download) {
+                    optionElement.addEventListener("click", (e) => {
+                        console.log("Downloading " + submenuOption.value);
+                        let downloadElement = document.createElement("a");
+                        downloadElement.href = submenuOption.value;
+                        downloadElement.setAttribute("download", "");
+                        downloadElement.click();
+                        downloadElement.remove();
+                    });
+                }
+
                 optionElement.onclick = (e) => {
                     if (e.target.parentElement.querySelector(".active")) {
                         e.target.parentElement.querySelector(".active").classList.remove("active");
                     }
 
-                    optionValue.innerText = submenuOption.name;
+                    if(option.name !== this.translateObject.download) {
+                        optionValue.innerText = submenuOption.name;
+                        e.target.classList.add("active");
+                    }
 
-                    e.target.classList.add("active");
                     this.videoBox.classList.remove("jkplayer-open-settings");
                 }
 
@@ -609,64 +725,70 @@ class JKplayer {
     }
 
     buildChapters(chapters) {
-        this.timelistChaptersBox.innerHTML = "";
+        //Create default chapters
+        let chapter = document.createElement("div");
+        chapter.classList.add("jkplayer-chapter");
+        chapter.style.width = "100%";
+        chapter.style.left = "0";
+        this.timelistChaptersBox.appendChild(chapter);
+
         if(chapters && Array.isArray(chapters) && chapters.length > 1) {
-            let videoDuration = this.videoDuration / 100;
-            //Sort chapters by time
-            chapters.sort((a, b) => {
-                return a.time.localeCompare(b.time);
-            });
+            console.log("Adding chaptes");
+            let buildChapters = () => {
+                this.timelistChaptersBox.innerHTML = "";
+                let videoDuration = this.videoDuration / 100;
+                //Sort chapters by time
+                chapters.sort((a, b) => {
+                    return a.time.localeCompare(b.time);
+                });
 
-            chapters.forEach((chapterData, index) => {
-                let time;
-                if(isNaN(chapterData.time)) {
-                    time = this.secondsFromTime(chapterData.time);
-                }
-
-                else {
-                    time = chapterData.time;
-                }
-
-                if(time <= this.videoDuration && time >= 0) {
-                    let chapter = document.createElement("div");
-                    chapter.classList.add("jkplayer-chapter");
-                    let endTime = chapters[index + 1] ? this.secondsFromTime(chapters[index + 1].time) : this.videoDuration;
-                    if(endTime > this.videoDuration) {
-                        console.warn("Cropping chapter, end time is out of range");
-                        endTime = this.videoDuration;
+                chapters.forEach((chapterData, index) => {
+                    let time;
+                    if(isNaN(chapterData.time)) {
+                        time = this.secondsFromTime(chapterData.time);
                     }
+    
+                    else {
+                        time = chapterData.time;
+                    }
+    
+                    if(time <= this.videoDuration && time >= 0) {
+                        let chapter = document.createElement("div");
+                        chapter.classList.add("jkplayer-chapter");
+                        let endTime = chapters[index + 1] ? this.secondsFromTime(chapters[index + 1].time) : this.videoDuration;
+                        if(endTime > this.videoDuration) {
+                            console.warn("Cropping chapter, end time is out of range");
+                            endTime = this.videoDuration;
+                        }
+    
+                        let width = this.widthFromTime(endTime - time);
+                        let left = (time / videoDuration);
+    
+                        chapter.style.width = `calc(${width}% - 3px)`;
+                        chapter.style.left = left + "%";
+                        chapter.style.backgroundColor = chapterData.color;
+                        chapter.dataset.name = chapterData.name || "";
+                        this.timelistChaptersBox.appendChild(chapter);
+                    }
+    
+                    else {
+                        console.warn("Chapter is out of range");
+                    }
+                });
+                this.videoElement.removeEventListener("loadedmetadata", buildChapters);
+            }
 
-                    let width = this.widthFromTime(endTime - time);
-                    let left = (time / videoDuration);
-
-                    chapter.style.width = `calc(${width}% - 3px)`;
-                    chapter.style.left = left + "%";
-                    chapter.style.backgroundColor = chapterData.color;
-                    chapter.dataset.name = chapterData.name || "";
-                    this.timelistChaptersBox.appendChild(chapter);
-                }
-
-                else {
-                    console.warn("Chapter is out of range");
-                }
-            });
-        }
-
-        else {
-            console.log("No chapters provided");
-            let chapter = document.createElement("div");
-            chapter.classList.add("jkplayer-chapter");
-            chapter.style.width = "100%";
-            chapter.style.left = "0";
-            this.timelistChaptersBox.appendChild(chapter);
+            this.videoElement.addEventListener("loadedmetadata", buildChapters);
         }
     }
 
     setVideoEvents() {
         //Prevent context menu
         this.videoBox.addEventListener("contextmenu", (e) => {
-            console.log("Prevented from context menu")
             e.preventDefault();
+            let bounding = this.videoBox.getBoundingClientRect();
+            console.log("Contextmenu");
+            //this.buildContextMenu(e.clientX - bounding.left,e.clientY - bounding.top);
         });
 
         //Poster box
@@ -696,8 +818,27 @@ class JKplayer {
             this.videoLengthSpan.innerText = this.timeFromSeconds(this.videoDuration);
         });
 
+        //saveProgress
+        if(this.playerSettings) {
+            let saveTimeLoop;
+            let saveCurrentTime = (e) => {
+                if(e.type === "play") {
+                    saveTimeLoop = setInterval(() => {
+                        this.updateSessionStorage("time", this.videoElement.currentTime);
+                    }, this.playerSettings.saveTimeInterval * 1000 ?? 60000);
+                }
+
+                else {
+                    clearInterval(saveTimeLoop);
+                }
+            }
+
+            this.videoElement.addEventListener("play", saveCurrentTime);
+            this.videoElement.addEventListener("pause", saveCurrentTime);
+        }
+
         //Buffered
-        //this.videoElement.addEventListener("progress", this.changeBuffered.bind(this));
+        this.videoElement.addEventListener("progress", this.changeBuffered.bind(this));
 
         //Play, pause
         this.centerPlayButton.addEventListener("click", this.togglePlay.bind(this));
@@ -738,10 +879,10 @@ class JKplayer {
             this.videoBox.classList.remove("jkplayer-loading");
         });
 
-        console.log("Settings video events end");
     }
 
     setControlsEvents() {
+        console.log("Settings events for controls");
         //Fullscreen
         this.fullscreenButton.addEventListener("click", this.toggleFullscreen.bind(this));
         document.addEventListener('fullscreenchange', () => {
@@ -795,19 +936,21 @@ class JKplayer {
         //Volume
         this.videoElement.addEventListener("volumechange", () => {
             console.log("Event: volumechange");
-            this.updateStorage("volume", this.videoElement.volume.toFixed(2));
+            this.updateLocalStorage("volume", this.videoElement.volume.toFixed(2));
             if(this.videoElement.volume === 0 || this.videoElement.muted) {
                 this.videoBox.classList.add("jkplayer-muted");
                 this.volumeLabel.dataset.tooltip = this.translateObject.unmute;
+                this.volumeActive.style.width = "0%";
+                this.updateLocalStorage("muted", true);
             }
 
             else {
                 this.videoBox.classList.remove("jkplayer-muted");
                 this.videoElement.muted = false;
                 this.volumeLabel.dataset.tooltip = this.translateObject.mute;
+                this.volumeActive.style.width = Number(this.videoElement.volume * 100) + "%";
+                this.updateLocalStorage("muted", false);
             }
-
-            this.volumeActive.style.width = Number(this.videoElement.volume * 100) + "%";
         });
 
         //Time events
@@ -872,10 +1015,6 @@ class JKplayer {
                 case "KeyS": 
                     this.toggleSettings(e);
                     break;
-
-                /*
-                    TODO Start media key, pause media key
-                */ 
             }
         });
     }
@@ -904,7 +1043,6 @@ class JKplayer {
         this.videoElement.addEventListener("click", this.togglePlay.bind(this));
 
         //Hide when not active
-
         let awaitTimeout;
         let controlsAwait = () => {
             this.videoBox.classList.remove("jkplayer-hidden-controls");
@@ -915,9 +1053,7 @@ class JKplayer {
 
             awaitTimeout = setTimeout(() => {
                 this.videoBox.classList.add("jkplayer-hidden-controls");
-            }, 4000);
-
-            //TODO await time by config
+            }, this.playerSettings.timeToHideControls * 1000 || 4000);
         }
 
         //Controls events
@@ -995,7 +1131,7 @@ class JKplayer {
 
         //Thumb events
         this.timelineBox.addEventListener("mouseenter", () => {
-            this.timelineThumb.style.display = "block";
+            this.timelineThumb.style.opacity = 1;
         });
 
         this.timelineBox.addEventListener("mousemove", (e) => {
@@ -1003,7 +1139,7 @@ class JKplayer {
         });
 
         this.timelineBox.addEventListener("mouseleave", () => {
-            this.timelineThumb.style.display = "none";
+            this.timelineThumb.style.opacity = 0;
         });
     }
 
@@ -1035,7 +1171,7 @@ class JKplayer {
             clearTimeout(hideControlsTimeout);
             hideControlsTimeout = setTimeout(() => {
                 this.videoBox.classList.add("jkplayer-hidden-controls");
-            }, 4000);
+            }, this.playerSettings.timeToHideControls * 1000 || 4000);
         });
 
         //Update time
@@ -1114,21 +1250,19 @@ class JKplayer {
         }
     }
 
+    buildContextMenu(x, y) {
+        let contextBox = document.createElement("div");
+        contextBox.id = "jkplayer-contextmenu";
+        contextBox.style.left = x + "px";
+        contextBox.style.top = y + "px";
+        this.videoBox.appendChild(contextBox);
+    }
+
     videoOnload() {
         if(this.videoElement.currentSrc) {
-            this.videoBox.style.aspectRatio = `${this.videoElement.videoWidth} / ${this.videoElement.videoHeight}`;
-            let sourceType = this.getSourceTypeFromFilename(this.videoElement.currentSrc);
-
-            if(this.videoElement.canPlayType(sourceType) === "") {
-                this.errorScreen(this.translateObject.unsupportedVideoByBrowser);
-            }
-
-            else {
-                this.videoDuration = this.videoElement.duration;
-                this.videoLengthSpan.innerText = this.timeFromSeconds(this.videoDuration);
-                this.currentTime.innerText = this.timeFromSeconds(this.videoElement.currentTime);
-                this.buildChapters(this.videoData.chapters);
-            }
+            let aspectRatio = this.playerSettings.aspectRatio ? this.playerSettings.aspectRatio : `${this.videoElement.videoWidth} / ${this.videoElement.videoHeight}`;
+            this.videoBox.style.aspectRatio = aspectRatio;
+            this.currentTime.innerText = this.timeFromSeconds(this.videoElement.currentTime);
         }
 
         else {
@@ -1283,12 +1417,32 @@ class JKplayer {
 
     toggleFullscreen() {
         if(document.fullscreenElement) {
-            document.exitFullscreen();
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+            
+            else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            
+            else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
         }
         
         else {
             try {
-                this.videoBox.requestFullscreen();
+                if (this.videoBox.requestFullscreen) {
+                    this.videoBox.requestFullscreen();
+                }
+                
+                else if (this.videoBox.webkitRequestFullscreen) {
+                    this.videoBox.webkitRequestFullscreen();
+                }
+                
+                else if (this.videoBox.msRequestFullscreen) {
+                    this.videoBox.msRequestFullscreen();
+                }
             }
 
             catch(e) {
@@ -1311,15 +1465,15 @@ class JKplayer {
     toggleMute() {
         if(this.videoElement.muted) {
             this.videoElement.muted = false;
-            this.videoElement.volume = this.oldVolume || 1;
-            this.updateStorage("muted", false);
+            //this.videoElement.volume = this.oldVolume || 1;
+            this.updateLocalStorage("muted", false);
         }
 
         else {
             this.videoElement.muted = true;
             this.oldVolume = this.videoElement.volume;
-            this.videoElement.volume = 0;
-            this.updateStorage("muted", true);
+            //this.videoElement.volume = 0;
+            this.updateLocalStorage("muted", true);
         }
     }
 
@@ -1328,10 +1482,12 @@ class JKplayer {
 
         //Settings events
         if(this.videoBox.classList.contains("jkplayer-open-settings")) {
+            console.log("Hiding settings box");
             this.videoBox.classList.remove("jkplayer-open-settings");
         }
 
         else {
+            console.log("Opening settings box");
             let oldActive = this.settingsBox.querySelector(".jkplayer-settings-screen:not(.jkplayer-settings-screen-main):not([hidden])");
             if(oldActive) {
                 oldActive.setAttribute("hidden", "");
@@ -1369,9 +1525,8 @@ class JKplayer {
     }
 
     skipTime(direction = "+") {
-        //TODO skip time by config
         if(direction === "-") {
-            this.videoElement.currentTime -= 10;
+            this.videoElement.currentTime -= this.playerSettings.skipTimeBack ?? 10;
         }
 
         else if(direction === "start") {
@@ -1383,7 +1538,7 @@ class JKplayer {
         }
 
         else {
-            this.videoElement.currentTime += 10;
+            this.videoElement.currentTime += this.playerSettings.skipTimeFront ?? 10;
         }
     }
 
@@ -1405,21 +1560,13 @@ class JKplayer {
         else {
             let source = this.videoElement.querySelector(`source[size="${resolution}"]`);
             if(source) {
-                let canPlay = this.videoElement.canPlayType(source.type);
-                if(canPlay === "") {
-                    console.error(`Browser doesn't support ${source.type}`);
-                    this.errorScreen(this.translateObject.unsupportedVideoByBrowser);
-                }
-
-                else {
-                    let play;
-                    this.videoElement.paused ? play = false : play = true;
-                    this.updateStorage("quality", resolution);
-                    let currentTime = this.videoElement.currentTime;
-                    this.videoElement.src = source.src;
-                    this.videoElement.currentTime = currentTime;
-                    if(play) this.videoElement.play();
-                }
+                let play;
+                this.videoElement.paused ? play = false : play = true;
+                this.updateLocalStorage("quality", resolution);
+                let currentTime = this.videoElement.currentTime;
+                this.videoElement.src = source.src;
+                this.videoElement.currentTime = currentTime;
+                if(play) this.videoElement.play();
             }
     
             else {
@@ -1431,7 +1578,7 @@ class JKplayer {
 
     changeVideoSpeed(speed) {
         this.videoElement.playbackRate = speed;
-        this.updateStorage("speed", speed)
+        this.updateLocalStorage("speed", speed)
     }
 
     toggleCaptions(lang) {
@@ -1450,7 +1597,7 @@ class JKplayer {
             this.videoBox.classList.remove("jkplayer-subtitles-enabled");
             this.videoElement.textTracks[id].mode = "disabled";
             this.videoElement.textTracks[id].removeEventListener('cuechange', this.captionsChangeEvent);
-            this.updateStorage("captions", false);
+            this.updateLocalStorage("captions", false);
         }
 
         else {
@@ -1487,7 +1634,7 @@ class JKplayer {
             this.videoBox.classList.add("jkplayer-subtitles-enabled");
             this.videoElement.textTracks[id].mode = "hidden";
             this.videoElement.textTracks[id].addEventListener('cuechange', this.captionsChangeEvent);
-            this.updateStorage("captions", language);
+            this.updateLocalStorage("captions", language);
         }
     }
 
@@ -1513,13 +1660,13 @@ class JKplayer {
                 this.videoBox.classList.add("jkplayer-subtitles-enabled");
                 this.videoElement.textTracks[id].mode = "hidden";
                 this.videoElement.textTracks[id].addEventListener('cuechange', this.captionsChangeEvent);
-                this.updateStorage("captions", lang);
+                this.updateLocalStorage("captions", lang);
             }
         }
 
         else {
             this.videoBox.classList.remove("jkplayer-subtitles-enabled");
-            this.updateStorage("captions", false);
+            this.updateLocalStorage("captions", false);
 
         }
     }
@@ -1743,5 +1890,6 @@ class JKplayer {
     clean() {
         this.videoElement.load();
         delete this.targetVideoNode;
+        console.log("Cleaning...");
     }
 }
