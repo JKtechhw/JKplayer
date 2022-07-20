@@ -77,4 +77,7 @@ body h1 {
 #container #socials #toggle-theme::after {
   -webkit-mask-image: var(--toggle-theme-icon);
           mask-image: var(--toggle-theme-icon);
+}
+#container canvas {
+  display: none;
 }/*# sourceMappingURL=demo.css.map */

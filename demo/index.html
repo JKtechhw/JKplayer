@@ -25,6 +25,8 @@
             <a href="https://github.com/JKtechhw/JKplayer" id="github" class="social" target="_blank"></a>
             <button id="toggle-theme" class="social"></button>
         </div>
+
+        <canvas width="1200" height="10"></canvas>
     </div>
 
     <script src="../src/js/JKplayer.js"></script>
@@ -34,12 +36,13 @@
             allowDownload: true,
             speedOptions: [0.5,1,2,4],
             allowTimelineThumbnail: true,
+            allowKeyboardShortcuts: true,
             pathToIcons: "/src/icons/",
             skipTimeFront: 10,
             skipTimeBack: 10,
             saveProgress: true,
             saveTimeInterval: 40,
-            timeToHideControls: 4,
+            timeToHideControls: 3,
             aspectRatio: "16/9",
             debugging: true
         }
@@ -56,7 +59,37 @@
             ]
         }
 
+        setTimeout(() => {
+            var myAudio = document.querySelector('video');
+            var myCanvas = document.querySelector('canvas');
+            var context = myCanvas.getContext('2d');
+
+            context.fillStyle = 'lightgray';
+            context.fillRect(0, 0, myCanvas.width, myCanvas.height);
+            context.fillStyle = 'red';
+            context.strokeStyle = 'white';
+
+            var inc = myCanvas.width / myAudio.duration;
+
+            // display TimeRanges
+
+            myAudio.addEventListener('seeked', function() {
+                console.log("Seeked", "color: red")
+                for (i = 0; i < myAudio.buffered.length; i++) {
+
+                    var startX = myAudio.buffered.start(i) * inc;
+                    var endX = myAudio.buffered.end(i) * inc;
+                    var width = endX - startX;
+
+                    context.fillRect(startX, 0, width, myCanvas.height);
+                    context.rect(startX, 0, width, myCanvas.height);
+                    context.stroke();
+                }
+            });
+        }, 1000);
+
         const player = new JKplayer("#player", settings ,times);
+        
     </script>
 </body>
 </html>

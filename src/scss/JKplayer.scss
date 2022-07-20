@@ -90,26 +90,6 @@
         -webkit-tap-highlight-color: transparent;
     }
 
-    &.jkplayer-mobile {
-        #jkplayer-controls {
-            .jkplayer-controls-button {
-                &:active {
-                    background-color: var(--theme-color);
-                }
-            }
-        }
-    }
-
-    &:not(&.jkplayer-mobile) {
-        #jkplayer-controls {
-            .jkplayer-controls-button {
-                &:hover {
-                    background-color: var(--theme-color);
-                }
-            }
-        }
-    }
-
     #jkplayer-contextmenu {
         position: absolute;
         background-color: var(--context-menu-background-color);
@@ -119,10 +99,11 @@
         border-radius: 5px;
 
         div {
-            width: 100px;
+            min-width: 100px;
             padding: 5px 10px;
             cursor: pointer;
             user-select: none;
+            white-space: nowrap;
 
             &:hover {
                 color: var(--context-menu-hover-color);
@@ -131,6 +112,7 @@
     }
 
     #jkplayer-wrapper {
+        user-select: none;
         position: relative;
         width: 100%;
         height: 100%;
@@ -194,16 +176,11 @@
         border-radius: 100%;
         width: var(--center-play-button-size);
         height: var(--center-play-button-size);
-        opacity: 1;
         transition: 0.2s opacity, 0.2s height, 0.2s width, 0.2s border-radius ease-in-out;
         outline: none;
         opacity: 0.8;
+        padding: 0;
         overflow: hidden;
-
-        &:hover {
-            opacity: 1;
-            border-radius: 5px;
-        }
 
         &::after {
             content: "";
@@ -303,14 +280,14 @@
                     &::before {
                         content: "";
                         position: absolute;
-                        right: calc(var(--range-thumb-size) / -2);
+                        right: 0;
                         height: var(--range-thumb-size);
                         width: var(--range-thumb-size);
                         background-color: var(--range-thumb-color);
                         border-radius: 50%;
                         top: 50%;
                         pointer-events: none;
-                        transform: translateY(-50%);
+                        transform: translate(50%, -50%);
                     }
                 }
 
@@ -688,6 +665,57 @@
         }
     }
 
+    &.jkplayer-mobile {
+        #jkplayer-controls {
+            .jkplayer-controls-button {
+                &:active {
+                    background-color: var(--theme-color);
+                }
+            }
+        }
+
+        #jkplayer-center-play-button {
+            opacity: 0.8;
+            width: var(--center-play-button-size);
+            height: var(--center-play-button-size);
+        }
+
+        &.jkplayer-hidden-controls {
+            #jkplayer-center-play-button {
+                width: 0;
+                height: 0;
+                opacity: 0;
+            }
+        }
+    }
+
+    &:not(&.jkplayer-mobile) {
+        #jkplayer-controls {
+            .jkplayer-controls-button {
+                &:hover {
+                    background-color: var(--theme-color);
+                }
+            }
+        }
+
+        #jkplayer-center-play-button {
+            &:hover {
+                opacity: 1;
+                width: calc(var(--center-play-button-size) * 1.2);
+                height: calc(var(--center-play-button-size) * 1.2);
+            }
+        }
+
+        &.jkplayer-playing {
+            #jkplayer-center-play-button {
+                width: 0;
+                height: 0;
+                opacity: 0;
+            }
+        }
+    }
+
+
     &.jkplayer-fullscreen {
         video {
             border-radius: 0;
@@ -702,9 +730,9 @@
 
     &.jkplayer-playing {
         #jkplayer-center-play-button {
-            width: 0;
-            height: 0;
-            opacity: 0;
+            &::after {
+                mask-image: url("../icons/pause.svg");
+            }
         }
 
         #jkplayer-controls {
@@ -750,6 +778,18 @@
 
         #jkplayer-captions {
             bottom: 50px !important;
+        }
+
+        #jkplayer-center-play-button {
+            opacity: 0.8 !important;
+            width: var(--center-play-button-size) !important;
+            height: var(--center-play-button-size) !important;
+
+            &:hover {
+                opacity: 1 !important;
+                width: calc(var(--center-play-button-size) * 1.2) !important;
+                height: calc(var(--center-play-button-size) * 1.2) !important;
+            }
         }
 
         &.jkplayer-open-settings {
