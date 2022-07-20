@@ -38,7 +38,7 @@
 
         //Timeline
         --timeline-thumb-background: #ffffff;
-        --timeline-thumb-time-color: #000000;
+        --timeline-thumb-chapter-time-color: #ffffff;
         --timeline-thumb-chapter-name-color: #ffffff;
         --timeline-thumb-size: 14px;
 
@@ -59,7 +59,12 @@
 
         //Tooltip
         --tooltip-color: var(--settings-menu-color);
-        --tooltip-background: var(--settings-menu-background)
+        --tooltip-background: var(--settings-menu-background);
+
+        //Context menu
+        --context-menu-background-color: #0000008c;
+        --context-menu-color: #cccccc;
+        --context-menu-hover-color: #ffffff;
     }
 
     #jkplayer-error-box {
@@ -106,10 +111,23 @@
     }
 
     #jkplayer-contextmenu {
-        background-color: rebeccapurple;
-        width: 50px;
-        height: 50px;
         position: absolute;
+        background-color: var(--context-menu-background-color);
+        color: var(--context-menu-color);
+        font-family: var(--controls-font-family);
+        padding: 7px;
+        border-radius: 5px;
+
+        div {
+            width: 100px;
+            padding: 5px 10px;
+            cursor: pointer;
+            user-select: none;
+
+            &:hover {
+                color: var(--context-menu-hover-color);
+            }
+        }
     }
 
     #jkplayer-wrapper {
@@ -232,6 +250,9 @@
 
         label {
             margin: 0 var(--controls-spacing);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .jkplayer-controls-button {
@@ -329,7 +350,7 @@
                 border-radius: 5px;
                 pointer-events: none;
                 transform: translateX(-50%);
-                transition: 0.2s bottom, 0.2s opacity;
+                transition: 0.2s bottom, 0.2s opacity, background 0.2s;
                 background-color: var(--timeline-thumb-background);
                 width: 90px;
                 height: 30px;
@@ -373,7 +394,7 @@
                     pointer-events: none;
                     user-select: none;
                     white-space: nowrap;
-                    color: var(--timeline-thumb-color);
+                    color: var(--timeline-thumb-chapter-time-color);
                 }
 
                 #jkplayer-timeline-thumb-name {

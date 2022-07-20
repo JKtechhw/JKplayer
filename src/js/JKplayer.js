@@ -65,7 +65,7 @@ class JKplayer {
                     unsupportedVideoByBrowser: "Váš prohlížeč nepodporuje formát videa"
                 }
 
-                this.debugging(this.playerSettings.debugging);
+                //this.debugging(this.playerSettings.debugging);
                 this.setPlayer();
             }
 
@@ -98,11 +98,6 @@ class JKplayer {
 
         this.setKeys();
         this.loadLocalStorage();
-
-        if(this.playerSettings.allowTimelineThumbnail) {
-            this.generateTimelineThumb();
-        }
-
         this.clean();
     }
 
@@ -538,6 +533,11 @@ class JKplayer {
         this.fullscreenButton.className = "jkplayer-controls-button";
         this.fullscreenLabel.appendChild(this.fullscreenButton);
         this.videoControlsBox.appendChild(this.fullscreenLabel);
+
+        if(this.playerSettings.allowTimelineThumbnail) {
+            this.thumbnailVideoPlayer = document.createElement("video");
+            this.thumbnailVideoPlayer.src = this.videoSources[this.videoSources.length - 1].src;
+        }
     }
 
     setupCast() {
@@ -552,7 +552,7 @@ class JKplayer {
     }
 
     buildSettingsBox() {
-        let options = [];
+        this.settingsOptions = [];
         let storageSettings = localStorage.getItem("jkplayer") ? JSON.parse(localStorage.getItem("jkplayer")) : {};
 
         if(this.textSources.length > 0) {
@@ -565,7 +565,7 @@ class JKplayer {
                 captionsOption.value.push(option);
             }
 
-            options.push(captionsOption);
+            this.settingsOptions.push(captionsOption);
         }
 
         if(this.videoSources.length > 1) {
@@ -578,7 +578,7 @@ class JKplayer {
                 qualityOptions.value.push(option);
             }
 
-            options.push(qualityOptions);
+            this.settingsOptions.push(qualityOptions);
         }
 
         if(this.playerSettings.allowDownload) {
@@ -591,7 +591,7 @@ class JKplayer {
                 downloadOptions.value.push(option);
             }
 
-            options.push(downloadOptions);
+            this.settingsOptions.push(downloadOptions);
         }
 
         let speedOptions =  this.playerSettings.speedOptions ||  [0.25, 0.50, 0.75, 1, 1.25, 1.5, 1.75, 2, 4];
@@ -601,14 +601,14 @@ class JKplayer {
             let option = {name: time + "×", value: time}
             videoSpeed.value.push(option);
         });
-        options.splice(options.length - 1, 0, videoSpeed);
+        this.settingsOptions.splice(this.settingsOptions.length - 1, 0, videoSpeed);
 
         let mainScreen = document.createElement("div");
         mainScreen.classList.add("jkplayer-settings-screen");
         mainScreen.classList.add("jkplayer-settings-screen-main");
         this.settingsMenu.appendChild(mainScreen);
 
-        options.forEach(option => {
+        this.settingsOptions.forEach(option => {
             let mainOptionElement = document.createElement("div");
             mainOptionElement.classList.add("jkplayer-settions-option");
             mainOptionElement.dataset.screenName = option.name;
@@ -788,7 +788,7 @@ class JKplayer {
             e.preventDefault();
             let bounding = this.videoBox.getBoundingClientRect();
             console.log("Contextmenu");
-            //this.buildContextMenu(e.clientX - bounding.left,e.clientY - bounding.top);
+            this.buildContextMenu(e.clientX - bounding.left,e.clientY - bounding.top);
         });
 
         //Poster box
@@ -1176,7 +1176,6 @@ class JKplayer {
 
         //Update time
         let moveTimeUpdate = (e) => {
-            console.log("Changing timeline thumb");
             this.changeTimelineThumb(e.changedTouches[0].clientX, document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY));
             let bounding = this.timelineBox.getBoundingClientRect();
             let width = ((e.changedTouches[0].clientX - bounding.left) / bounding.width) * 100;
@@ -1186,7 +1185,7 @@ class JKplayer {
         }
 
         let finalTimeUpdate = (e) => {
-            this.timelineThumb.style.display = "none";
+            this.timelineThumb.style.opacity = 0;
             document.removeEventListener("touchmove", moveTimeUpdate);
             document.removeEventListener("touchend", finalTimeUpdate);
             let width = moveTimeUpdate(e);
@@ -1213,7 +1212,7 @@ class JKplayer {
 
             moveTimeUpdate(e);
 
-            this.timelineThumb.style.display = "block";
+            this.timelineThumb.style.opacity = 1;
             document.addEventListener("touchmove", moveTimeUpdate);
             document.addEventListener("touchend", finalTimeUpdate);
         });
@@ -1251,8 +1250,17 @@ class JKplayer {
     }
 
     buildContextMenu(x, y) {
+        let oldContextBox = this.videoBox.querySelector("#jkplayer-contextmenu");
+        if(oldContextBox) {
+            oldContextBox.remove();
+        }
         let contextBox = document.createElement("div");
         contextBox.id = "jkplayer-contextmenu";
+        this.settingsOptions.forEach(option => {
+            let optionElement = document.createElement("div");
+            optionElement.innerText = option.name;
+            contextBox.appendChild(optionElement);
+        })
         contextBox.style.left = x + "px";
         contextBox.style.top = y + "px";
         this.videoBox.appendChild(contextBox);
@@ -1271,7 +1279,7 @@ class JKplayer {
         }
     }
 
-    changeTimelineThumb(clientX, target) {
+    async changeTimelineThumb(clientX, target) {
         let timelineBound = this.timelineBox.getBoundingClientRect();
         let timelineWidth = this.timelineBox.clientWidth;
         let videoDuration = this.videoDuration;
@@ -1292,127 +1300,30 @@ class JKplayer {
                     this.timelineThumbName.innerText = "";
                 }
             }
-    
-            if(this.thumbnails) {
-                for (var item of this.thumbnails) {
-                    var data = item.sec.find(x1 => x1.index === Math.floor(progresstime));
-                    if (data) {
-                        if (item.data != undefined) {
-                            this.timelineThumb.style.backgroundImage = `url(${item.data})`;
-                            this.timelineThumb.style.backgroundPosition = `${data.backgroundPositionX}px ${data.backgroundPositionY}px`;
-                            return;
-                        }
-                    }
-                }
-            }
+
+            this.generateTimelineThumb(Math.floor(((clientX - timelineBound.left) / timelineWidth) * videoDuration));
         }
     }
 
-    generateTimelineThumb() {
-        console.time("thumb");
-        this.thumbnails = [];
+    async generateTimelineThumb(currentTime) {
+        this.timelineThumb.classList.add("jkplayer-preview");
+        //return new Promise((resolve, reject) => {
+            this.thumbnailVideoPlayer.currentTime = currentTime;
+                const canvas = document.createElement("canvas");
+                canvas.width = 158;
+                canvas.height = 90;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(this.thumbnailVideoPlayer, 0, 0, canvas.width, canvas.height);
 
-        this.timelineThumb.classList.add("jkplayer-preview")
+                ctx.canvas.toBlob(   
+                    blob => {
+                        this.timelineThumb.style.backgroundImage = `url(${URL.createObjectURL(blob)})`;
+                    },
+                    "image/jpeg",
+                    0.75 /* quality */
+                );
 
-        var thumbnailWidth = 158;
-        var thumbnailHeight = 90;
-        var horizontalItemCount = 5;
-        var verticalItemCount = 5;
-
-        let preview_video = document.createElement('video');
-        preview_video.preload = "metadata";
-        preview_video.width = "500";
-        preview_video.height = "300"
-        preview_video.controls = true;
-
-        preview_video.src = this.videoElement.currentSrc;
-        preview_video.addEventListener("loadeddata", async () => {
-            preview_video.pause();
-            var count = 1;
-            var id = 1;
-            var x = 0,
-                y = 0;
-            var array = [];
-            var duration = parseInt(preview_video.duration);
-
-            for (var i = 1; i <= duration; i++) {
-                array.push(i);
-            }
-
-            var canvas;
-            var i, j;
-
-            for (i = 0, j = array.length; i < j; i += horizontalItemCount) {
-                for (var startIndex of array.slice(i, i + horizontalItemCount)) {
-                    var backgroundPositionX = x * thumbnailWidth;
-                    var backgroundPositionY = y * thumbnailHeight;
-                    var item = this.thumbnails.find((x) => x.id === id);
-
-                    if (!item) {
-                        canvas = document.createElement("canvas");
-                        canvas.width = thumbnailWidth * horizontalItemCount;
-                        canvas.height = thumbnailHeight * verticalItemCount;
-                        this.thumbnails.push({
-                        id: id,
-                        canvas: canvas,
-                            sec: [
-                                {
-                                    index: startIndex,
-                                    backgroundPositionX: -backgroundPositionX,
-                                    backgroundPositionY: -backgroundPositionY,
-                                },
-                            ],
-                        });
-                    } 
-                    
-                    else {
-                        canvas = item.canvas;
-                            item.sec.push({
-                            index: startIndex,
-                            backgroundPositionX: -backgroundPositionX,
-                            backgroundPositionY: -backgroundPositionY,
-                        });
-                    }
-                    var context = canvas.getContext("2d");
-                    preview_video.currentTime = startIndex;
-                    await new Promise((resolve) => {
-                        var event = function () {
-                            context.drawImage(
-                                preview_video,
-                                backgroundPositionX,
-                                backgroundPositionY,
-                                thumbnailWidth,
-                                thumbnailHeight
-                            );
-                            x++;
-                            preview_video.removeEventListener("canplay", event);
-                            resolve();
-                        };
-                        preview_video.addEventListener("canplay", event);
-                    });
-                    count++;
-                }
-
-                x = 0;
-                y++;
-                if (count > horizontalItemCount * verticalItemCount) {
-                    count = 1;
-                    x = 0;
-                    y = 0;
-                    id++;
-                }
-
-                console.log("Generating");
-            }
-
-            this.thumbnails.forEach((item) => {
-                item.canvas.toBlob((blob) => (item.data = URL.createObjectURL(blob)), "image/jpeg");
-                delete item.canvas;
-            });
-
-            console.log("done...");
-            console.timeEnd("thumb");
-        });
+            console.log(currentTime)
     }
 
     toggleFullscreen() {

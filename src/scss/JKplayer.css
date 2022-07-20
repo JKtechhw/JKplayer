@@ -25,7 +25,7 @@
   --range-thumb-color: #ffffff;
   --range-thumb-size: 14px;
   --timeline-thumb-background: #ffffff;
-  --timeline-thumb-time-color: #000000;
+  --timeline-thumb-chapter-time-color: #ffffff;
   --timeline-thumb-chapter-name-color: #ffffff;
   --timeline-thumb-size: 14px;
   --poster-background-color: #000000;
@@ -38,7 +38,10 @@
   --center-play-button-color: var(--theme-color);
   --center-play-icon-color: #ffffff;
   --tooltip-color: var(--settings-menu-color);
-  --tooltip-background: var(--settings-menu-background) ;
+  --tooltip-background: var(--settings-menu-background);
+  --context-menu-background-color: #0000008c;
+  --context-menu-color: #cccccc;
+  --context-menu-hover-color: #ffffff;
 }
 :root #jkplayer-error-box {
   --error-box-font-family: "Finlandica", sans-serif;
@@ -68,10 +71,24 @@
   background-color: var(--theme-color);
 }
 #jkplayer-box #jkplayer-contextmenu {
-  background-color: rebeccapurple;
-  width: 50px;
-  height: 50px;
   position: absolute;
+  background-color: var(--context-menu-background-color);
+  color: var(--context-menu-color);
+  font-family: var(--controls-font-family);
+  padding: 7px;
+  border-radius: 5px;
+}
+#jkplayer-box #jkplayer-contextmenu div {
+  width: 100px;
+  padding: 5px 10px;
+  cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+#jkplayer-box #jkplayer-contextmenu div:hover {
+  color: var(--context-menu-hover-color);
 }
 #jkplayer-box #jkplayer-wrapper {
   position: relative;
@@ -192,6 +209,9 @@
 }
 #jkplayer-box #jkplayer-controls label {
   margin: 0 var(--controls-spacing);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 #jkplayer-box #jkplayer-controls .jkplayer-controls-button {
   border: none;
@@ -288,7 +308,7 @@
   border-radius: 5px;
   pointer-events: none;
   transform: translateX(-50%);
-  transition: 0.2s bottom, 0.2s opacity;
+  transition: 0.2s bottom, 0.2s opacity, background 0.2s;
   background-color: var(--timeline-thumb-background);
   width: 90px;
   height: 30px;
@@ -331,7 +351,7 @@
       -ms-user-select: none;
           user-select: none;
   white-space: nowrap;
-  color: var(--timeline-thumb-color);
+  color: var(--timeline-thumb-chapter-time-color);
 }
 #jkplayer-box #jkplayer-controls #jkplayer-timeline-box #jkplayer-timeline-thumb #jkplayer-timeline-thumb-name {
   position: absolute;
